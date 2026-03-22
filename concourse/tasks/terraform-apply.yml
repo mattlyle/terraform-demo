@@ -21,7 +21,7 @@ params:
   TF_TARGETS: ""
 
 run:
-  path: bash
+  path: sh
   args:
     - -euc
     - |

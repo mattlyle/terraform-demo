@@ -46,6 +46,7 @@ podman run -d \
   --main-team-local-user="${ADMIN_USER}" \
   --external-url="http://localhost:${PORT}" \
   --worker-runtime=containerd \
+  --worker-baggageclaim-driver=naive \
   --postgres-host=concourse-db \
   --postgres-user=concourse \
   --postgres-password=concourse \
