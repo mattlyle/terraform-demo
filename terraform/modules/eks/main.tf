@@ -29,7 +29,7 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   eks_managed_node_groups = {
-    default = {
+    demo-eks-nodes = {
       instance_types = [var.node_instance_type]
 
       min_size     = var.node_min_size
