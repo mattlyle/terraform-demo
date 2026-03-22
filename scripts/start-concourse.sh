@@ -41,7 +41,6 @@ podman run -d \
   --cgroupns=host \
   --security-opt seccomp=unconfined \
   -p "${PORT}:8080" \
-  -v "${PROJECT_DIR}:/workspace" \
   "docker.io/concourse/concourse:${CONCOURSE_VERSION}" quickstart \
   --add-local-user="${ADMIN_USER}:${ADMIN_PASS}" \
   --main-team-local-user="${ADMIN_USER}" \

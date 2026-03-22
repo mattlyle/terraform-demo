@@ -16,6 +16,7 @@ params:
   AWS_ACCESS_KEY_ID: ""
   AWS_SECRET_ACCESS_KEY: ""
   AWS_DEFAULT_REGION: "us-east-1"
+  TF_VAR_project_name: "matt-lyle-terraform-demo"
   TF_DIR: terraform
   TF_TARGETS: ""
 
