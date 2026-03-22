@@ -1,0 +1,33 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+
+# Credentials & secrets
+.env
+.env.*
+credentials
+*_credentials*
+*_secrets*
+
+# AWS
+.aws/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Concourse
+concourse/keys/
