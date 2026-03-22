@@ -1,0 +1,41 @@
+---
+# Installs the kube-prometheus-stack Helm chart into EKS.
+# Uses Alpine Linux with helm, kubectl, and aws-cli installed at task runtime.
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: alpine
+    tag: "3.19"
+
+inputs:
+  - name: repo
+
+params:
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  AWS_DEFAULT_REGION: "us-east-1"
+  CLUSTER_NAME: "matt-lyle-terraform-demo-eks"
+
+run:
+  path: sh
+  args:
+    - -euc
+    - |
+      apk add --no-cache aws-cli helm kubectl
+
+      aws eks update-kubeconfig \
+        --region "${AWS_DEFAULT_REGION}" \
+        --name "${CLUSTER_NAME}"
+
+      helm repo add prometheus-community \
+        https://prometheus-community.github.io/helm-charts
+      helm repo update
+
+      helm upgrade --install kube-prometheus-stack \
+        prometheus-community/kube-prometheus-stack \
+        --namespace monitoring \
+        --create-namespace \
+        --set grafana.service.type=LoadBalancer \
+        --wait

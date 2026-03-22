@@ -30,4 +30,5 @@ credentials
 Thumbs.db
 
 # Concourse
+concourse/credentials.yml
 concourse/keys/

@@ -1,0 +1,29 @@
+---
+# Runs terraform apply in the repo's terraform/ directory.
+# TF_TARGETS is optional -- set to e.g. "-target=module.vpc" to scope an apply.
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: hashicorp/terraform
+    tag: "1.9"
+
+inputs:
+  - name: repo
+
+params:
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  AWS_DEFAULT_REGION: "us-east-1"
+  TF_DIR: terraform
+  TF_TARGETS: ""
+
+run:
+  path: bash
+  args:
+    - -euc
+    - |
+      cd repo/${TF_DIR}
+      terraform init -input=false
+      terraform apply -auto-approve -input=false ${TF_TARGETS}

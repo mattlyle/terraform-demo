@@ -1,0 +1,19 @@
+---
+resources:
+  - name: repo
+    type: git
+    source:
+      uri: ((git_repo_uri))
+      branch: ((git_branch))
+
+jobs:
+  - name: install
+    plan:
+      - get: repo
+      - task: helm-install-monitoring
+        file: repo/concourse/tasks/helm-install-monitoring.yml
+        params:
+          AWS_ACCESS_KEY_ID: ((aws_access_key_id))
+          AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+          AWS_DEFAULT_REGION: ((aws_region))
+          CLUSTER_NAME: ((eks_cluster_name))

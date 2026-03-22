@@ -1,0 +1,55 @@
+---
+resources:
+  - name: repo
+    type: git
+    source:
+      uri: ((git_repo_uri))
+      branch: ((git_branch))
+
+jobs:
+  - name: build
+    plan:
+      - get: repo
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: {repository: alpine, tag: "3.19"}
+          inputs:
+            - name: repo
+          run:
+            path: echo
+            args: ["TODO: build api-server image"]
+
+  - name: push
+    plan:
+      - get: repo
+        passed: [build]
+      - task: push
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: {repository: alpine, tag: "3.19"}
+          inputs:
+            - name: repo
+          run:
+            path: echo
+            args: ["TODO: push api-server image to ECR"]
+
+  - name: deploy
+    plan:
+      - get: repo
+        passed: [push]
+      - task: deploy
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: {repository: alpine, tag: "3.19"}
+          inputs:
+            - name: repo
+          run:
+            path: echo
+            args: ["TODO: kubectl apply api-server deployment"]
