@@ -6,50 +6,58 @@ resources:
       uri: ((git_repo_uri))
       branch: ((git_branch))
 
-jobs:
-  - name: build
-    plan:
-      - get: repo
-      - task: build
-        config:
-          platform: linux
-          image_resource:
-            type: registry-image
-            source: {repository: alpine, tag: "3.19"}
-          inputs:
-            - name: repo
-          run:
-            path: echo
-            args: ["TODO: build api-server image"]
+  - name: api-server-image
+    type: registry-image
+    source:
+      repository: ((ecr_registry))/((project_name))-api-server
+      aws_access_key_id: ((aws_access_key_id))
+      aws_secret_access_key: ((aws_secret_access_key))
+      aws_region: ((aws_region))
 
-  - name: push
+jobs:
+  - name: build-and-push
     plan:
       - get: repo
-        passed: [build]
-      - task: push
+        trigger: false
+      - task: build
+        privileged: true
         config:
           platform: linux
           image_resource:
             type: registry-image
-            source: {repository: alpine, tag: "3.19"}
+            source: { repository: concourse/oci-build-task }
           inputs:
             - name: repo
+          outputs:
+            - name: image
+          params:
+            CONTEXT: repo/services/api-server
           run:
-            path: echo
-            args: ["TODO: push api-server image to ECR"]
+            path: build
+      - put: api-server-image
+        params:
+          image: image/image.tar
+          additional_tags: repo/.git/short_ref
 
   - name: deploy
     plan:
       - get: repo
-        passed: [push]
-      - task: deploy
-        config:
-          platform: linux
-          image_resource:
-            type: registry-image
-            source: {repository: alpine, tag: "3.19"}
-          inputs:
-            - name: repo
-          run:
-            path: echo
-            args: ["TODO: kubectl apply api-server deployment"]
+        passed: [build-and-push]
+        trigger: false
+      - get: api-server-image
+        passed: [build-and-push]
+      - task: kubectl-apply
+        file: repo/concourse/tasks/kubectl-apply.yml
+        params:
+          AWS_ACCESS_KEY_ID: ((aws_access_key_id))
+          AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+          AWS_DEFAULT_REGION: ((aws_region))
+          CLUSTER_NAME: ((eks_cluster_name))
+          SERVICE_NAME: api-server
+          ECR_REGISTRY: ((ecr_registry))
+          PROJECT_NAME: ((project_name))
+          DB_HOST: ((db_host))
+          DB_NAME: ((db_name))
+          DB_USER: ((db_user))
+          SSM_DB_PASSWORD_PATH: ((ssm_db_password_path))
+          SQS_QUEUE_URL: ((sqs_queue_url))

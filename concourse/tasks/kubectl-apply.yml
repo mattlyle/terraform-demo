@@ -1,0 +1,97 @@
+---
+# Deploys a service to EKS by:
+#   1. Creating the app-config ConfigMap and app-secrets Secret
+#   2. Applying the service-specific K8s manifests (with envsubst for image + role ARNs)
+#   3. Applying the shared Ingress
+
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: amazon/aws-cli
+    tag: "2.22.0"
+
+inputs:
+  - name: repo
+
+params:
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  AWS_DEFAULT_REGION: "us-east-1"
+  CLUSTER_NAME: ""
+  SERVICE_NAME: ""          # frontend | api-server | backend-worker
+  ECR_REGISTRY: ""          # e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com
+  PROJECT_NAME: ""
+  # ConfigMap values (not needed for frontend)
+  DB_HOST: ""
+  DB_PORT: "5432"
+  DB_NAME: ""
+  DB_USER: ""
+  SSM_DB_PASSWORD_PATH: ""  # e.g. /matt-lyle-terraform-demo/db/password
+  SQS_QUEUE_URL: ""
+
+run:
+  path: sh
+  args:
+    - -euc
+    - |
+      # ── Install kubectl ──────────────────────────────────────────────────────
+      KUBECTL_VERSION="1.33.0"
+      curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
+        -o /usr/local/bin/kubectl
+      chmod +x /usr/local/bin/kubectl
+
+      # Install gettext for envsubst
+      yum install -q -y gettext
+
+      # ── Authenticate to EKS ──────────────────────────────────────────────────
+      aws eks update-kubeconfig \
+        --region "${AWS_DEFAULT_REGION}" \
+        --name   "${CLUSTER_NAME}"
+
+      # ── Ensure namespace exists ──────────────────────────────────────────────
+      kubectl apply -f repo/k8s/namespace.yaml
+
+      # ── Shared ConfigMap + Secret (idempotent) ───────────────────────────────
+      if [ "${SERVICE_NAME}" != "frontend" ]; then
+        DB_PASSWORD=$(aws ssm get-parameter \
+          --name "${SSM_DB_PASSWORD_PATH}" \
+          --with-decryption \
+          --query "Parameter.Value" \
+          --output text)
+
+        kubectl create configmap app-config \
+          --from-literal=DB_HOST="${DB_HOST}" \
+          --from-literal=DB_PORT="${DB_PORT}" \
+          --from-literal=DB_NAME="${DB_NAME}" \
+          --from-literal=DB_USER="${DB_USER}" \
+          --from-literal=SQS_QUEUE_URL="${SQS_QUEUE_URL}" \
+          --from-literal=AWS_REGION="${AWS_DEFAULT_REGION}" \
+          --namespace demo \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+        kubectl create secret generic app-secrets \
+          --from-literal=DB_PASSWORD="${DB_PASSWORD}" \
+          --namespace demo \
+          --dry-run=client -o yaml | kubectl apply -f -
+      fi
+
+      # ── Apply service manifests ──────────────────────────────────────────────
+      K8S_DIR="repo/k8s/${SERVICE_NAME}"
+
+      export ECR_REGISTRY PROJECT_NAME \
+             SQS_QUEUE_URL AWS_DEFAULT_REGION AWS_REGION="${AWS_DEFAULT_REGION}"
+
+      # Deployment (has image reference — needs ECR_REGISTRY and PROJECT_NAME substituted)
+      envsubst '${ECR_REGISTRY} ${PROJECT_NAME}' \
+        < "${K8S_DIR}/deployment.yaml" | kubectl apply -f -
+
+      # Service
+      if [ -f "${K8S_DIR}/service.yaml" ]; then
+        kubectl apply -f "${K8S_DIR}/service.yaml"
+      fi
+
+      echo ""
+      echo "Deploy complete: ${SERVICE_NAME}"
+      kubectl rollout status deployment/"${SERVICE_NAME}" \
+        --namespace demo --timeout=120s || true

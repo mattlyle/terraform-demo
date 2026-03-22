@@ -1,0 +1,34 @@
+---
+resources:
+  - name: repo
+    type: git
+    source:
+      uri: ((git_repo_uri))
+      branch: ((git_branch))
+
+jobs:
+  - name: plan
+    plan:
+      - get: repo
+      - task: terraform-plan
+        file: repo/concourse/tasks/terraform-plan.yml
+        params:
+          AWS_ACCESS_KEY_ID:     ((aws_access_key_id))
+          AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+          AWS_DEFAULT_REGION:    ((aws_region))
+          TF_VAR_project_name:   ((project_name))
+          TF_DIR:                terraform/sqs-infra
+
+  - name: apply
+    plan:
+      - get: repo
+        passed: [plan]
+        trigger: false
+      - task: terraform-apply
+        file: repo/concourse/tasks/terraform-apply.yml
+        params:
+          AWS_ACCESS_KEY_ID:     ((aws_access_key_id))
+          AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+          AWS_DEFAULT_REGION:    ((aws_region))
+          TF_VAR_project_name:   ((project_name))
+          TF_DIR:                terraform/sqs-infra
