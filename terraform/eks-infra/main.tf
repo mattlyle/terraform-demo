@@ -23,11 +23,5 @@ module "eks" {
   tags                     = local.common_tags
 }
 
-# Generates a short-lived token for the helm and kubernetes providers.
-# Uses the AWS SDK directly — no aws CLI binary required.
-# Note: no depends_on here — the cluster_name local value is always known, so
-# this data source can be read during plan. For a brand-new deploy where the
-# cluster doesn't exist yet, run: terraform apply -target=module.eks first.
-data "aws_eks_cluster_auth" "this" {
-  name = local.cluster_name
-}
+# Used to construct the ECR registry URL output
+data "aws_caller_identity" "current" {}

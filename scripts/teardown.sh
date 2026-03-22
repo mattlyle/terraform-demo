@@ -38,6 +38,7 @@ destroy_component() {
   echo "Done: ${name}"
 }
 
+destroy_component "SQS Infra" "sqs-infra"
 destroy_component "RDS"        "rds-infra"
 destroy_component "EKS"        "eks-infra"
 destroy_component "Networking" "networking-infra"

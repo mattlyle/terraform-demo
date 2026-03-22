@@ -43,6 +43,10 @@ module "eks" {
         http_tokens                 = "required"
         http_put_response_hop_limit = 1
       }
+
+      iam_role_additional_policies = {
+        sqs = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
+      }
     }
   }
 
