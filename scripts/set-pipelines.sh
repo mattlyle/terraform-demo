@@ -12,6 +12,21 @@ GIT_BRANCH="main"
 AWS_REGION="us-east-1"
 PROJECT_NAME="matt-lyle-terraform-demo"
 EKS_CLUSTER_NAME="${PROJECT_NAME}-eks"
+TF_DIR="${SCRIPT_DIR}/../terraform"
+
+# Attempt to read values from Terraform outputs after infra is applied.
+# Falls back to empty strings if not yet applied — re-run set-pipelines.sh after apply.
+get_tf_output() {
+  terraform -chdir="${TF_DIR}/$1" output -raw "$2" 2>/dev/null || echo ""
+}
+
+echo "Reading Terraform outputs (silently skips modules not yet applied)..."
+ECR_REGISTRY=$(get_tf_output      "eks-infra" "ecr_registry")
+SQS_QUEUE_URL=$(get_tf_output     "sqs-infra" "sqs_queue_url")
+DB_HOST=$(get_tf_output           "rds-infra" "db_endpoint")
+DB_NAME=$(get_tf_output           "rds-infra" "db_name")
+DB_USER=$(get_tf_output           "rds-infra" "db_username")
+SSM_DB_PASSWORD_PATH=$(get_tf_output "rds-infra" "db_password_ssm_path")
 
 if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
   CREDS_FILE="${HOME}/.aws/credentials"
@@ -36,11 +51,11 @@ PIPELINES=(
   networking-infra
   eks-infra
   rds-infra
+  sqs-infra
   install-monitoring
   deploy-frontend
   deploy-api-server
   deploy-backend-worker
-  deploy-user-simulator
 )
 
 for pipeline in "${PIPELINES[@]}"; do
@@ -55,7 +70,13 @@ for pipeline in "${PIPELINES[@]}"; do
     --var "project_name=${PROJECT_NAME}" \
     --var "git_repo_uri=${GIT_REPO_URI}" \
     --var "git_branch=${GIT_BRANCH}" \
-    --var "eks_cluster_name=${EKS_CLUSTER_NAME}"
+    --var "eks_cluster_name=${EKS_CLUSTER_NAME}" \
+    --var "ecr_registry=${ECR_REGISTRY}" \
+    --var "sqs_queue_url=${SQS_QUEUE_URL}" \
+    --var "db_host=${DB_HOST}" \
+    --var "db_name=${DB_NAME}" \
+    --var "db_user=${DB_USER}" \
+    --var "ssm_db_password_path=${SSM_DB_PASSWORD_PATH}"
   fly -t local unpause-pipeline --pipeline "${pipeline}"
 done
 

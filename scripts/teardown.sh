@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
-# Tears down everything created during the demo in reverse dependency order:
-#   1. RDS (depends on EKS security group + networking)
-#   2. EKS (depends on networking)
-#   3. Networking (VPC, subnets, flow logs, etc.)
-#   4. Concourse containers
-#
-# Terraform remote state remains in S3/DynamoDB — run
+
+# Tears down everything created during the demo in reverse dependency order
 # scripts/delete-terraform-backend.sh separately if you want a full cleanup.
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
