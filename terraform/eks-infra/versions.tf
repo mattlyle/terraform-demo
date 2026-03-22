@@ -22,10 +22,6 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0"
     }
-    tls = {
-      source  = "hashicorp/tls"
-      version = "~> 4.0"
-    }
   }
 }
 
@@ -37,26 +33,22 @@ provider "aws" {
   }
 }
 
-# Both the helm and kubernetes providers authenticate via the aws cli token exec plugin
-# so no static credentials are needed — works both locally and in Concourse.
+# Both the helm and kubernetes providers authenticate via the aws_eks_cluster_auth
+# data source — no aws CLI binary required, works in Concourse too.
+# config_path="" explicitly disables kubeconfig loading so there is no fallback
+# to exec-based auth (e.g. ~/.kube/config entries created by aws eks update-kubeconfig).
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", local.cluster_name, "--region", var.aws_region]
-    }
+    token                  = data.aws_eks_cluster_auth.this.token
+    config_path            = ""
   }
 }
 
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", local.cluster_name, "--region", var.aws_region]
-  }
+  token                  = data.aws_eks_cluster_auth.this.token
+  config_path            = ""
 }
