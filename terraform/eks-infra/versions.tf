@@ -14,13 +14,17 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.0"
+    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0"
     }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.0"
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
     }
   }
 }
@@ -30,5 +34,29 @@ provider "aws" {
 
   default_tags {
     tags = local.common_tags
+  }
+}
+
+# Both the helm and kubernetes providers authenticate via the aws cli token exec plugin
+# so no static credentials are needed — works both locally and in Concourse.
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", local.cluster_name, "--region", var.aws_region]
+    }
+  }
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", local.cluster_name, "--region", var.aws_region]
   }
 }
