@@ -22,6 +22,7 @@ get_tf_output() {
 
 echo "Reading Terraform outputs (silently skips modules not yet applied)..."
 ECR_REGISTRY=$(get_tf_output      "eks-infra" "ecr_registry")
+AWS_ACCOUNT_ID=$(echo "${ECR_REGISTRY}" | cut -d. -f1)
 SQS_QUEUE_URL=$(get_tf_output     "sqs-infra" "sqs_queue_url")
 DB_HOST=$(get_tf_output           "rds-infra" "db_endpoint")
 DB_NAME=$(get_tf_output           "rds-infra" "db_name")
@@ -72,6 +73,7 @@ for pipeline in "${PIPELINES[@]}"; do
     --var "git_branch=${GIT_BRANCH}" \
     --var "eks_cluster_name=${EKS_CLUSTER_NAME}" \
     --var "ecr_registry=${ECR_REGISTRY}" \
+    --var "aws_account_id=${AWS_ACCOUNT_ID}" \
     --var "sqs_queue_url=${SQS_QUEUE_URL}" \
     --var "db_host=${DB_HOST}" \
     --var "db_name=${DB_NAME}" \

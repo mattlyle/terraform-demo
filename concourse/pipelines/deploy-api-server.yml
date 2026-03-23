@@ -9,10 +9,12 @@ resources:
   - name: api-server-image
     type: registry-image
     source:
-      repository: ((ecr_registry))/((project_name))-api-server
+      repository: ((project_name))-api-server
+      tag: latest
       aws_access_key_id: ((aws_access_key_id))
       aws_secret_access_key: ((aws_secret_access_key))
       aws_region: ((aws_region))
+      aws_account_id: ((aws_account_id))
 
 jobs:
   - name: build-and-push
@@ -37,7 +39,6 @@ jobs:
       - put: api-server-image
         params:
           image: image/image.tar
-          additional_tags: repo/.git/short_ref
 
   - name: deploy
     plan:
