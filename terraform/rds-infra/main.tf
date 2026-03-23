@@ -27,7 +27,9 @@ module "rds" {
   cluster_name           = local.cluster_name
   vpc_id                 = local.vpc_id
   private_subnet_ids     = local.private_subnet_ids
+  public_subnet_ids      = local.public_subnet_ids
   node_security_group_id = local.node_security_group_id
+  allowed_admin_cidrs    = var.allowed_admin_cidrs
   db_instance_class      = var.db_instance_class
   db_name                = var.db_name
   db_username            = var.db_username

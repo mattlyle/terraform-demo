@@ -23,6 +23,18 @@ variable "node_security_group_id" {
   type        = string
 }
 
+variable "public_subnet_ids" {
+  description = "Public subnet IDs — added to the DB subnet group so the instance can be publicly accessible"
+  type        = list(string)
+  default     = []
+}
+
+variable "allowed_admin_cidrs" {
+  description = "CIDRs allowed to reach RDS on port 5432 — for developer direct access"
+  type        = list(string)
+  default     = []
+}
+
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
