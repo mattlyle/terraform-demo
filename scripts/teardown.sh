@@ -36,6 +36,31 @@ destroy_component() {
 
 destroy_component "SQS Infra" "sqs-infra"
 destroy_component "RDS"        "rds-infra"
+
+# ── Remove Kubernetes-managed AWS resources before destroying EKS ────────────
+# The NGINX Ingress Controller and kube-prometheus-stack each create AWS
+# resources (Load Balancer, etc.) that live outside Terraform state.
+# They must be removed first — otherwise the VPC destroy will fail because
+# AWS refuses to delete subnets that still have active ELBs attached.
+echo ""
+echo "--- Removing Helm releases and Kubernetes-managed AWS resources ---"
+TF_DIR_EKS="${TF_DIR}/eks-infra"
+if [ ! -d "${TF_DIR_EKS}/.terraform" ]; then
+  terraform -chdir="${TF_DIR_EKS}" init -input=false -reconfigure
+fi
+CLUSTER_NAME=$(terraform -chdir="${TF_DIR_EKS}" output -raw cluster_name 2>/dev/null || echo "")
+AWS_REGION="us-east-1"
+if [ -n "${CLUSTER_NAME}" ]; then
+  aws eks update-kubeconfig --region "${AWS_REGION}" --name "${CLUSTER_NAME}" 2>/dev/null || true
+  # Uninstalling ingress-nginx deletes the LoadBalancer service, which
+  # triggers AWS to deprovision the ELB before we destroy the VPC.
+  helm uninstall ingress-nginx --namespace ingress-nginx 2>/dev/null || true
+  helm uninstall kube-prometheus-stack --namespace monitoring 2>/dev/null || true
+  echo "Helm releases removed."
+else
+  echo "Could not determine cluster name — skipping Helm cleanup (cluster may already be gone)."
+fi
+
 destroy_component "EKS"        "eks-infra"
 destroy_component "Networking" "networking-infra"
 
