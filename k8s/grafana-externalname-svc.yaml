@@ -1,0 +1,16 @@
+---
+# Allows the Ingress (which lives in the `demo` namespace) to route
+# /monitoring traffic to Grafana, which runs in the `monitoring` namespace.
+# Kubernetes Ingress objects can only reference Services in the same namespace,
+# so this ExternalName Service acts as a cross-namespace bridge.
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-external
+  namespace: demo
+spec:
+  type: ExternalName
+  externalName: kube-prometheus-stack-grafana.monitoring.svc.cluster.local
+  ports:
+    - port: 80
+      targetPort: 80

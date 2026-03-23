@@ -33,9 +33,14 @@ run:
         https://prometheus-community.github.io/helm-charts
       helm repo update
 
+      # ── kube-prometheus-stack (Prometheus + Grafana) ─────────────────────────
+      # Grafana is configured to serve from the /monitoring subpath so that
+      # the NGINX Ingress can route /monitoring → Grafana without path rewriting.
       helm upgrade --install kube-prometheus-stack \
         prometheus-community/kube-prometheus-stack \
         --namespace monitoring \
         --create-namespace \
-        --set grafana.service.type=LoadBalancer \
+        --set grafana.service.type=ClusterIP \
+        --set 'grafana.grafana\.ini.server.root_url=%(protocol)s://%(domain)s/monitoring/' \
+        --set 'grafana.grafana\.ini.server.serve_from_sub_path=true' \
         --wait

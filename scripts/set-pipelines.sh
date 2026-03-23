@@ -53,6 +53,7 @@ PIPELINES=(
   eks-infra
   rds-infra
   sqs-infra
+  install-ingress
   install-monitoring
   deploy-services
 )

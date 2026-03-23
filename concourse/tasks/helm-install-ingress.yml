@@ -1,0 +1,46 @@
+---
+# Installs the NGINX Ingress Controller into EKS.
+# This is cluster-level infrastructure — it provisions the single AWS Load
+# Balancer that routes all external traffic into the cluster:
+#
+#   /api/*        → api-server
+#   /monitoring/* → Grafana
+#   /*            → frontend
+#
+# Run this pipeline once after EKS is up, before deploy-services.
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: alpine
+    tag: "3.19"
+
+inputs:
+  - name: repo
+
+params:
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  AWS_DEFAULT_REGION: "us-east-1"
+  CLUSTER_NAME: "matt-lyle-terraform-demo-eks"
+
+run:
+  path: sh
+  args:
+    - -euc
+    - |
+      apk add --no-cache aws-cli helm kubectl
+
+      aws eks update-kubeconfig \
+        --region "${AWS_DEFAULT_REGION}" \
+        --name "${CLUSTER_NAME}"
+
+      helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+      helm repo update
+
+      helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+        --namespace ingress-nginx \
+        --create-namespace \
+        --set controller.service.type=LoadBalancer \
+        --wait

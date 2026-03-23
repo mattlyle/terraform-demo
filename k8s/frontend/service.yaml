@@ -4,9 +4,9 @@ metadata:
   name: frontend
   namespace: demo
 spec:
-  # LoadBalancer provisions an AWS ELB automatically — one public endpoint
-  # for the whole demo. nginx proxies /api internally to api-server.
-  type: LoadBalancer
+  # ClusterIP — the NGINX Ingress Controller provides the single external
+  # load balancer and routes / here, /api to api-server, /monitoring to Grafana.
+  type: ClusterIP
   selector:
     app: frontend
   ports:
