@@ -29,6 +29,7 @@ params:
   DB_USER: ""
   SSM_DB_PASSWORD_PATH: ""  # e.g. /matt-lyle-terraform-demo/db/password
   SQS_QUEUE_URL: ""
+  IMAGE_TAG: "latest"      # e.g. v0.9 — set by the pipeline
 
 run:
   path: sh
@@ -79,11 +80,11 @@ run:
       # ── Apply service manifests ──────────────────────────────────────────────
       K8S_DIR="repo/k8s/${SERVICE_NAME}"
 
-      export ECR_REGISTRY PROJECT_NAME \
+      export ECR_REGISTRY PROJECT_NAME IMAGE_TAG \
              SQS_QUEUE_URL AWS_DEFAULT_REGION AWS_REGION="${AWS_DEFAULT_REGION}"
 
-      # Deployment (has image reference — needs ECR_REGISTRY and PROJECT_NAME substituted)
-      envsubst '${ECR_REGISTRY} ${PROJECT_NAME}' \
+      # Deployment (has image reference — needs ECR_REGISTRY, PROJECT_NAME and IMAGE_TAG substituted)
+      envsubst '${ECR_REGISTRY} ${PROJECT_NAME} ${IMAGE_TAG}' \
         < "${K8S_DIR}/deployment.yaml" | kubectl apply -f -
 
       # Service

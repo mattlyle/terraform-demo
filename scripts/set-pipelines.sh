@@ -54,9 +54,7 @@ PIPELINES=(
   rds-infra
   sqs-infra
   install-monitoring
-  deploy-frontend
-  deploy-api-server
-  deploy-backend-worker
+  deploy-services
 )
 
 for pipeline in "${PIPELINES[@]}"; do

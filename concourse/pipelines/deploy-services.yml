@@ -1,0 +1,186 @@
+---
+resources:
+  - name: repo
+    type: git
+    source:
+      uri: ((git_repo_uri))
+      branch: ((git_branch))
+
+  - name: api-server-image
+    type: registry-image
+    source:
+      repository: ((project_name))-api-server
+      tag: latest
+      aws_access_key_id: ((aws_access_key_id))
+      aws_secret_access_key: ((aws_secret_access_key))
+      aws_region: ((aws_region))
+      aws_account_id: ((aws_account_id))
+
+  - name: frontend-image
+    type: registry-image
+    source:
+      repository: ((project_name))-frontend
+      tag: latest
+      aws_access_key_id: ((aws_access_key_id))
+      aws_secret_access_key: ((aws_secret_access_key))
+      aws_region: ((aws_region))
+      aws_account_id: ((aws_account_id))
+
+  - name: backend-worker-image
+    type: registry-image
+    source:
+      repository: ((project_name))-backend-worker
+      tag: latest
+      aws_access_key_id: ((aws_access_key_id))
+      aws_secret_access_key: ((aws_secret_access_key))
+      aws_region: ((aws_region))
+      aws_account_id: ((aws_account_id))
+
+jobs:
+  - name: api-server
+    plan:
+      - get: repo
+        trigger: false
+      - task: build
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: concourse/oci-build-task }
+          inputs:
+            - name: repo
+          outputs:
+            - name: image
+          params:
+            CONTEXT: repo/services/api-server
+          run:
+            path: build
+      - task: generate-tag
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: alpine }
+          outputs:
+            - name: tag
+          run:
+            path: sh
+            args: ["-c", "echo v0.${BUILD_NAME} > tag/tag"]
+      - put: api-server-image
+        params:
+          image: image/image.tar
+          additional_tags: tag/tag
+      - task: kubectl-apply
+        file: repo/concourse/tasks/kubectl-apply.yml
+        params:
+          AWS_ACCESS_KEY_ID: ((aws_access_key_id))
+          AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+          AWS_DEFAULT_REGION: ((aws_region))
+          CLUSTER_NAME: ((eks_cluster_name))
+          SERVICE_NAME: api-server
+          ECR_REGISTRY: ((ecr_registry))
+          PROJECT_NAME: ((project_name))
+          DB_HOST: ((db_host))
+          DB_NAME: ((db_name))
+          DB_USER: ((db_user))
+          SSM_DB_PASSWORD_PATH: ((ssm_db_password_path))
+          SQS_QUEUE_URL: ((sqs_queue_url))
+          IMAGE_TAG: v0.$BUILD_NAME
+
+  - name: frontend
+    plan:
+      - get: repo
+        trigger: false
+      - task: build
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: concourse/oci-build-task }
+          inputs:
+            - name: repo
+          outputs:
+            - name: image
+          params:
+            CONTEXT: repo/services/frontend
+          run:
+            path: build
+      - task: generate-tag
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: alpine }
+          outputs:
+            - name: tag
+          run:
+            path: sh
+            args: ["-c", "echo v0.${BUILD_NAME} > tag/tag"]
+      - put: frontend-image
+        params:
+          image: image/image.tar
+          additional_tags: tag/tag
+      - task: kubectl-apply
+        file: repo/concourse/tasks/kubectl-apply.yml
+        params:
+          AWS_ACCESS_KEY_ID: ((aws_access_key_id))
+          AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+          AWS_DEFAULT_REGION: ((aws_region))
+          CLUSTER_NAME: ((eks_cluster_name))
+          SERVICE_NAME: frontend
+          ECR_REGISTRY: ((ecr_registry))
+          PROJECT_NAME: ((project_name))
+          IMAGE_TAG: v0.$BUILD_NAME
+
+  - name: backend-worker
+    plan:
+      - get: repo
+        trigger: false
+      - task: build
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: concourse/oci-build-task }
+          inputs:
+            - name: repo
+          outputs:
+            - name: image
+          params:
+            CONTEXT: repo/services/backend-worker
+          run:
+            path: build
+      - task: generate-tag
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: alpine }
+          outputs:
+            - name: tag
+          run:
+            path: sh
+            args: ["-c", "echo v0.${BUILD_NAME} > tag/tag"]
+      - put: backend-worker-image
+        params:
+          image: image/image.tar
+          additional_tags: tag/tag
+      - task: kubectl-apply
+        file: repo/concourse/tasks/kubectl-apply.yml
+        params:
+          AWS_ACCESS_KEY_ID: ((aws_access_key_id))
+          AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+          AWS_DEFAULT_REGION: ((aws_region))
+          CLUSTER_NAME: ((eks_cluster_name))
+          SERVICE_NAME: backend-worker
+          ECR_REGISTRY: ((ecr_registry))
+          PROJECT_NAME: ((project_name))
+          DB_HOST: ((db_host))
+          DB_NAME: ((db_name))
+          DB_USER: ((db_user))
+          SSM_DB_PASSWORD_PATH: ((ssm_db_password_path))
+          SQS_QUEUE_URL: ((sqs_queue_url))
+          IMAGE_TAG: v0.$BUILD_NAME

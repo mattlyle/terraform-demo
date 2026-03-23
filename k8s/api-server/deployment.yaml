@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: api-server
-          image: ${ECR_REGISTRY}/${PROJECT_NAME}-api-server:latest
+          image: ${ECR_REGISTRY}/${PROJECT_NAME}-api-server:${IMAGE_TAG}
           ports:
             - containerPort: 8000
           envFrom:
