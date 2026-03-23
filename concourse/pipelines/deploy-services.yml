@@ -64,9 +64,13 @@ jobs:
             source: { repository: alpine }
           outputs:
             - name: tag
+          params:
+            BUILD_NAME: ""
           run:
             path: sh
-            args: ["-c", "echo v0.${BUILD_NAME} > tag/tag"]
+            args: ["-c", "echo v0.$BUILD_NAME > tag/tag"]
+        params:
+          BUILD_NAME: ((.:build-name))
       - put: api-server-image
         params:
           image: image/image.tar
@@ -115,9 +119,13 @@ jobs:
             source: { repository: alpine }
           outputs:
             - name: tag
+          params:
+            BUILD_NAME: ""
           run:
             path: sh
-            args: ["-c", "echo v0.${BUILD_NAME} > tag/tag"]
+            args: ["-c", "echo v0.$BUILD_NAME > tag/tag"]
+        params:
+          BUILD_NAME: ((.:build-name))
       - put: frontend-image
         params:
           image: image/image.tar
@@ -161,9 +169,13 @@ jobs:
             source: { repository: alpine }
           outputs:
             - name: tag
+          params:
+            BUILD_NAME: ""
           run:
             path: sh
-            args: ["-c", "echo v0.${BUILD_NAME} > tag/tag"]
+            args: ["-c", "echo v0.$BUILD_NAME > tag/tag"]
+        params:
+          BUILD_NAME: ((.:build-name))
       - put: backend-worker-image
         params:
           image: image/image.tar
