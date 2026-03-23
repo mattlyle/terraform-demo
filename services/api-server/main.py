@@ -1,6 +1,5 @@
 import json
 import os
-import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -43,7 +42,7 @@ def create_tables() -> None:
         with conn.cursor() as cur:
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS jobs (
-                    id            UUID PRIMARY KEY,
+                    id            BIGSERIAL PRIMARY KEY,
                     job_length_ms INTEGER NOT NULL,
                     status        VARCHAR(20) NOT NULL DEFAULT 'queued',
                     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -88,15 +87,15 @@ def health():
 
 @app.post("/api/jobs", status_code=201)
 def create_job(body: CreateJobRequest):
-    job_id = str(uuid.uuid4())
     pool = get_pool()
     conn = pool.getconn()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO jobs (id, job_length_ms, status) VALUES (%s, %s, 'queued')",
-                (job_id, body.job_length_ms),
+                "INSERT INTO jobs (job_length_ms, status) VALUES (%s, 'queued') RETURNING id",
+                (body.job_length_ms,),
             )
+            job_id = cur.fetchone()[0]
         conn.commit()
     except Exception as exc:
         conn.rollback()
@@ -130,7 +129,7 @@ def list_jobs():
 
     return [
         {
-            "id":            str(row[0]),
+            "id":            row[0],
             "job_length_ms": row[1],
             "status":        row[2],
             "created_at":    row[3].isoformat() if row[3] else None,
