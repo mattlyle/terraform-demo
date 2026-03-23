@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQS Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1a1d2e;
+            border-bottom: 1px solid #2d3748;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        header .badge {
+            background: #553c9a;
+            color: #e9d8fd;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #1a1d2e;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card .num {
+            font-size: 2.25rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-card .label {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .num.total {
+            color: #63b3ed;
+        }
+
+        .num.queued {
+            color: #fbd38d;
+        }
+
+        .num.processing {
+            color: #76e4f7;
+        }
+
+        .num.completed {
+            color: #68d391;
+        }
+
+        .controls {
+            background: #1a1d2e;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #a0aec0;
+        }
+
+        .controls input[type=range] {
+            accent-color: #805ad5;
+            cursor: pointer;
+        }
+
+        .controls span {
+            font-weight: 600;
+            color: #e2e8f0;
+            min-width: 48px;
+            display: inline-block;
+        }
+
+        .btn {
+            padding: 9px 22px;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .15s;
+        }
+
+        .btn:hover {
+            opacity: .85;
+        }
+
+        .btn-start {
+            background: #38a169;
+            color: #fff;
+        }
+
+        .btn-stop {
+            background: #e53e3e;
+            color: #fff;
+        }
+
+        .btn-once {
+            background: #3182ce;
+            color: #fff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        thead th {
+            background: #1a1d2e;
+            color: #718096;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: .05em;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #1e2537;
+            transition: background .1s;
+        }
+
+        tbody tr:hover {
+            background: #1a1d2e;
+        }
+
+        tbody td {
+            padding: 10px 12px;
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .s-queued {
+            background: #744210;
+            color: #fbd38d;
+        }
+
+        .s-processing {
+            background: #086f83;
+            color: #76e4f7;
+        }
+
+        .s-completed {
+            background: #1c4532;
+            color: #68d391;
+        }
+
+        .mono {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #a0aec0;
+        }
+
+        #status-bar {
+            font-size: 0.78rem;
+            color: #718096;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>SQS Job Queue Demo</h1>
+        <span class="badge">EKS · SQS · RDS</span>
+    </header>
+    <main>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="num total" id="s-total">–</div>
+                <div class="label">Total Jobs</div>
+            </div>
+            <div class="stat-card">
+                <div class="num queued" id="s-queued">–</div>
+                <div class="label">Queued</div>
+            </div>
+            <div class="stat-card">
+                <div class="num processing" id="s-processing">–</div>
+                <div class="label">Processing</div>
+            </div>
+            <div class="stat-card">
+                <div class="num completed" id="s-completed">–</div>
+                <div class="label">Completed</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div>
+                <label>Job length &nbsp;</label>
+                <input type="range" id="job-ms" min="500" max="15000" step="500" value="5000"
+                    oninput="document.getElementById('job-ms-val').textContent=this.value+'ms'">
+                <span id="job-ms-val">5000ms</span>
+            </div>
+            <div>
+                <label>Submit interval &nbsp;</label>
+                <input type="range" id="interval" min="500" max="5000" step="500" value="1000"
+                    oninput="document.getElementById('interval-val').textContent=this.value+'ms'">
+                <span id="interval-val">1000ms</span>
+            </div>
+            <button class="btn btn-once" onclick="submitJob()">Submit One</button>
+            <button class="btn btn-start" id="btn-loop" onclick="toggleLoop()">▶ Start Loop</button>
+        </div>
+
+        <div id="status-bar">Refreshing every 2s…</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Job ID</th>
+                    <th>Length</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody id="job-tbody"></tbody>
+        </table>
+    </main>
+
+    <script>
+        let loopTimer = null;
+
+        async function submitJob() {
+            const ms = parseInt(document.getElementById('job-ms').value);
+            try {
+                await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ job_length_ms: ms })
+                });
+                refresh();
+            } catch (e) { console.error('submit failed', e); }
+        }
+
+        function toggleLoop() {
+            const btn = document.getElementById('btn-loop');
+            if (loopTimer) {
+                clearInterval(loopTimer);
+                loopTimer = null;
+                btn.textContent = '▶ Start Loop';
+                btn.className = 'btn btn-start';
+            } else {
+                const interval = parseInt(document.getElementById('interval').value);
+                loopTimer = setInterval(submitJob, interval);
+                btn.textContent = '⏹ Stop Loop';
+                btn.className = 'btn btn-stop';
+            }
+        }
+
+        function fmt(iso) {
+            if (!iso) return '–';
+            return new Date(iso).toLocaleTimeString();
+        }
+
+        function duration(job) {
+            if (job.status === 'completed' && job.started_at && job.completed_at) {
+                const ms = new Date(job.completed_at) - new Date(job.started_at);
+                return (ms / 1000).toFixed(1) + 's';
+            }
+            if (job.status === 'processing' && job.started_at) {
+                const ms = Date.now() - new Date(job.started_at);
+                return (ms / 1000).toFixed(0) + 's…';
+            }
+            return '–';
+        }
+
+        async function refresh() {
+            try {
+                const res = await fetch('/api/jobs');
+                const jobs = await res.json();
+
+                let total = jobs.length, queued = 0, processing = 0, completed = 0;
+                jobs.forEach(j => {
+                    if (j.status === 'queued') queued++;
+                    else if (j.status === 'processing') processing++;
+                    else if (j.status === 'completed') completed++;
+                });
+
+                document.getElementById('s-total').textContent = total;
+                document.getElementById('s-queued').textContent = queued;
+                document.getElementById('s-processing').textContent = processing;
+                document.getElementById('s-completed').textContent = completed;
+
+                const tbody = document.getElementById('job-tbody');
+                tbody.innerHTML = jobs.map(j => `
+          <tr>
+            <td class="mono">${j.id.split('-')[0]}…</td>
+            <td>${j.job_length_ms}ms</td>
+            <td><span class="badge-status s-${j.status}">${j.status}</span></td>
+            <td class="mono">${fmt(j.created_at)}</td>
+            <td class="mono">${duration(j)}</td>
+          </tr>`).join('');
+
+                document.getElementById('status-bar').textContent =
+                    `Last refresh: ${new Date().toLocaleTimeString()} · ${jobs.length} jobs shown`;
+            } catch (e) {
+                document.getElementById('status-bar').textContent = 'API unavailable — retrying…';
+            }
+        }
+
+        refresh();
+        setInterval(refresh, 2000);
+    </script>
+</body>
+
+</html>

@@ -6,50 +6,54 @@ resources:
       uri: ((git_repo_uri))
       branch: ((git_branch))
 
-jobs:
-  - name: build
-    plan:
-      - get: repo
-      - task: build
-        config:
-          platform: linux
-          image_resource:
-            type: registry-image
-            source: {repository: alpine, tag: "3.19"}
-          inputs:
-            - name: repo
-          run:
-            path: echo
-            args: ["TODO: build frontend image"]
+  - name: frontend-image
+    type: registry-image
+    source:
+      repository: ((project_name))-frontend
+      tag: latest
+      aws_access_key_id: ((aws_access_key_id))
+      aws_secret_access_key: ((aws_secret_access_key))
+      aws_region: ((aws_region))
+      aws_account_id: ((aws_account_id))
 
-  - name: push
+jobs:
+  - name: build-and-push
     plan:
       - get: repo
-        passed: [build]
-      - task: push
+        trigger: false
+      - task: build
+        privileged: true
         config:
           platform: linux
           image_resource:
             type: registry-image
-            source: {repository: alpine, tag: "3.19"}
+            source: { repository: concourse/oci-build-task }
           inputs:
             - name: repo
+          outputs:
+            - name: image
+          params:
+            CONTEXT: repo/services/frontend
           run:
-            path: echo
-            args: ["TODO: push frontend image to ECR"]
+            path: build
+      - put: frontend-image
+        params:
+          image: image/image.tar
 
   - name: deploy
     plan:
       - get: repo
-        passed: [push]
-      - task: deploy
-        config:
-          platform: linux
-          image_resource:
-            type: registry-image
-            source: {repository: alpine, tag: "3.19"}
-          inputs:
-            - name: repo
-          run:
-            path: echo
-            args: ["TODO: kubectl apply frontend deployment"]
+        passed: [build-and-push]
+        trigger: false
+      - get: frontend-image
+        passed: [build-and-push]
+      - task: kubectl-apply
+        file: repo/concourse/tasks/kubectl-apply.yml
+        params:
+          AWS_ACCESS_KEY_ID: ((aws_access_key_id))
+          AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
+          AWS_DEFAULT_REGION: ((aws_region))
+          CLUSTER_NAME: ((eks_cluster_name))
+          SERVICE_NAME: frontend
+          ECR_REGISTRY: ((ecr_registry))
+          PROJECT_NAME: ((project_name))
