@@ -16,16 +16,16 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #0d1117;
-            color: #c9d1d9;
+            background: #f3f4f6;
+            color: #111827;
             min-height: 100vh;
             font-size: 14px;
         }
 
         /* ── Header ── */
         header {
-            background: #161b22;
-            border-bottom: 1px solid #30363d;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
             padding: 0 32px;
             height: 56px;
             display: flex;
@@ -45,14 +45,14 @@
             gap: 10px;
             font-weight: 600;
             font-size: 15px;
-            color: #e6edf3;
+            color: #111827;
             letter-spacing: -0.01em;
         }
 
         .logo-icon {
             width: 30px;
             height: 30px;
-            background: linear-gradient(135deg, #388bfd 0%, #8957e5 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
             border-radius: 7px;
             display: flex;
             align-items: center;
@@ -67,9 +67,9 @@
         }
 
         .tech-badge {
-            background: #21262d;
-            border: 1px solid #30363d;
-            color: #8b949e;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #6b7280;
             font-size: 11px;
             padding: 2px 9px;
             border-radius: 20px;
@@ -81,13 +81,13 @@
             align-items: center;
             gap: 7px;
             font-size: 12px;
-            color: #7d8590;
+            color: #6b7280;
         }
 
         .live-dot {
             width: 7px;
             height: 7px;
-            background: #3fb950;
+            background: #16a34a;
             border-radius: 50%;
             flex-shrink: 0;
             animation: blink 2s ease-in-out infinite;
@@ -121,8 +121,8 @@
         }
 
         .stat-card {
-            background: #161b22;
-            border: 1px solid #30363d;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 18px 20px;
             position: relative;
@@ -135,23 +135,23 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 2px;
+            height: 3px;
         }
 
         .c-total::after {
-            background: #388bfd;
+            background: #2563eb;
         }
 
         .c-queued::after {
-            background: #e3b341;
+            background: #d97706;
         }
 
         .c-processing::after {
-            background: #39c5cf;
+            background: #0891b2;
         }
 
         .c-completed::after {
-            background: #3fb950;
+            background: #16a34a;
         }
 
         .stat-label {
@@ -159,7 +159,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.07em;
-            color: #7d8590;
+            color: #6b7280;
             margin-bottom: 10px;
         }
 
@@ -171,25 +171,25 @@
         }
 
         .c-total .stat-value {
-            color: #388bfd;
+            color: #2563eb;
         }
 
         .c-queued .stat-value {
-            color: #e3b341;
+            color: #d97706;
         }
 
         .c-processing .stat-value {
-            color: #39c5cf;
+            color: #0891b2;
         }
 
         .c-completed .stat-value {
-            color: #3fb950;
+            color: #16a34a;
         }
 
         /* ── Panel ── */
         .panel {
-            background: #161b22;
-            border: 1px solid #30363d;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 16px 20px;
             margin-bottom: 20px;
@@ -200,7 +200,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.07em;
-            color: #7d8590;
+            color: #6b7280;
             margin-bottom: 14px;
         }
 
@@ -219,12 +219,12 @@
 
         .control-label {
             font-size: 13px;
-            color: #8b949e;
+            color: #4b5563;
             white-space: nowrap;
         }
 
         input[type=range] {
-            accent-color: #388bfd;
+            accent-color: #2563eb;
             cursor: pointer;
             width: 130px;
         }
@@ -232,7 +232,7 @@
         .control-value {
             font-size: 13px;
             font-weight: 600;
-            color: #e6edf3;
+            color: #111827;
             min-width: 56px;
             font-variant-numeric: tabular-nums;
         }
@@ -264,21 +264,21 @@
         }
 
         .btn-primary {
-            background: #238636;
-            border-color: #2ea043;
+            background: #2563eb;
+            border-color: #1d4ed8;
             color: #fff;
         }
 
         .btn-danger {
-            background: #b91c1c;
-            border-color: #ef4444;
+            background: #dc2626;
+            border-color: #b91c1c;
             color: #fff;
         }
 
         .btn-secondary {
-            background: #21262d;
-            border-color: #30363d;
-            color: #c9d1d9;
+            background: #ffffff;
+            border-color: #d1d5db;
+            color: #374151;
         }
 
         /* ── Table ── */
@@ -292,17 +292,17 @@
         .table-title {
             font-size: 13px;
             font-weight: 600;
-            color: #e6edf3;
+            color: #111827;
         }
 
         #status-bar {
             font-size: 12px;
-            color: #7d8590;
+            color: #6b7280;
         }
 
         .table-wrap {
-            background: #161b22;
-            border: 1px solid #30363d;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -313,19 +313,19 @@
         }
 
         thead th {
-            background: #161b22;
-            color: #7d8590;
+            background: #f9fafb;
+            color: #6b7280;
             text-transform: uppercase;
             font-size: 11px;
             font-weight: 600;
             letter-spacing: .07em;
             padding: 10px 16px;
             text-align: left;
-            border-bottom: 1px solid #30363d;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         tbody tr {
-            border-bottom: 1px solid #21262d;
+            border-bottom: 1px solid #f3f4f6;
         }
 
         tbody tr:last-child {
@@ -333,7 +333,7 @@
         }
 
         tbody tr:hover {
-            background: #1c2128;
+            background: #f9fafb;
         }
 
         tbody td {
@@ -344,11 +344,11 @@
         .job-id {
             font-family: "SF Mono", "Fira Code", "Courier New", monospace;
             font-size: 12px;
-            color: #8b949e;
-            background: #21262d;
+            color: #374151;
+            background: #f3f4f6;
             padding: 2px 8px;
             border-radius: 4px;
-            border: 1px solid #30363d;
+            border: 1px solid #e5e7eb;
         }
 
         .badge-status {
@@ -369,45 +369,45 @@
         }
 
         .s-queued {
-            background: rgba(227, 179, 65, .12);
-            color: #e3b341;
-            border: 1px solid rgba(227, 179, 65, .3);
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
         }
 
         .s-processing {
-            background: rgba(57, 197, 207, .12);
-            color: #39c5cf;
-            border: 1px solid rgba(57, 197, 207, .3);
+            background: #e0f2fe;
+            color: #075985;
+            border: 1px solid #7dd3fc;
         }
 
         .s-completed {
-            background: rgba(63, 185, 80, .12);
-            color: #3fb950;
-            border: 1px solid rgba(63, 185, 80, .3);
+            background: #dcfce7;
+            color: #14532d;
+            border: 1px solid #86efac;
         }
 
         .s-queued .badge-dot {
-            background: #e3b341;
+            background: #d97706;
         }
 
         .s-processing .badge-dot {
-            background: #39c5cf;
+            background: #0891b2;
             animation: blink 1s ease-in-out infinite;
         }
 
         .s-completed .badge-dot {
-            background: #3fb950;
+            background: #16a34a;
         }
 
         .mono {
             font-family: "SF Mono", "Fira Code", "Courier New", monospace;
             font-size: 12px;
-            color: #8b949e;
+            color: #6b7280;
         }
 
         .empty-row td {
             text-align: center;
-            color: #7d8590;
+            color: #9ca3af;
             padding: 40px;
         }
     </style>
@@ -456,10 +456,16 @@
             <div class="panel-title">Submit Jobs</div>
             <div class="controls-row">
                 <div class="control-group">
-                    <span class="control-label">Job duration</span>
-                    <input type="range" id="job-ms" min="100" max="2000" step="100" value="500"
-                        oninput="document.getElementById('job-ms-val').textContent=this.value+'ms'">
-                    <span class="control-value" id="job-ms-val">500ms</span>
+                    <span class="control-label">Min duration</span>
+                    <input type="range" id="job-ms-min" min="100" max="2000" step="100" value="200"
+                        oninput="syncDurationSliders()">
+                    <span class="control-value" id="job-ms-min-val">200ms</span>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Max duration</span>
+                    <input type="range" id="job-ms-max" min="100" max="2000" step="100" value="1000"
+                        oninput="syncDurationSliders()">
+                    <span class="control-value" id="job-ms-max-val">1000ms</span>
                 </div>
                 <div class="control-group">
                     <span class="control-label">Submit interval</span>
@@ -500,8 +506,24 @@
     <script>
         let loopTimer = null;
 
+        function syncDurationSliders() {
+            let min = parseInt(document.getElementById('job-ms-min').value);
+            let max = parseInt(document.getElementById('job-ms-max').value);
+            if (min > max) {
+                // keep them from crossing
+                const src = event.target.id;
+                if (src === 'job-ms-min') { max = min; document.getElementById('job-ms-max').value = max; }
+                else { min = max; document.getElementById('job-ms-min').value = min; }
+            }
+            document.getElementById('job-ms-min-val').textContent = min + 'ms';
+            document.getElementById('job-ms-max-val').textContent = max + 'ms';
+        }
+
         async function submitJob() {
-            const ms = parseInt(document.getElementById('job-ms').value);
+            const min = parseInt(document.getElementById('job-ms-min').value);
+            const max = parseInt(document.getElementById('job-ms-max').value);
+            const steps = (max - min) / 100;
+            const ms = min + Math.round(Math.random() * steps) * 100;
             try {
                 await fetch('/api/jobs', {
                     method: 'POST',
