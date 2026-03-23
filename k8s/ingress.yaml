@@ -1,17 +1,12 @@
 ---
-# Single entry point for the demo application.
+# Single entry point for the demo application (demo namespace rules).
 # The NGINX Ingress Controller provides one AWS Load Balancer for all traffic:
 #
-#   /api/*        → api-server (FastAPI, port 8000) — routes already use /api prefix
-#   /monitoring/* → Grafana   (via ExternalName svc bridging to monitoring namespace)
-#   /*            → frontend  (nginx serving the SPA, port 80)
+#   /api/*  → api-server (FastAPI, port 8000) — routes already use /api prefix
+#   /*      → frontend  (nginx serving the SPA, port 80)
 #
-# Rule order: more-specific paths (/api, /monitoring) are listed first so they
-# match before the catch-all /.
-#
-# Prerequisite: the install-monitoring pipeline must run first to install the
-# ingress-nginx controller (creates the LoadBalancer) and configure Grafana's
-# serve_from_sub_path setting.
+# Grafana (/monitoring) is handled by a separate Ingress in the monitoring
+# namespace — see k8s/grafana-ingress.yaml.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -32,13 +27,6 @@ spec:
                 name: api-server
                 port:
                   number: 8000
-          - path: /monitoring
-            pathType: Prefix
-            backend:
-              service:
-                name: grafana-external
-                port:
-                  number: 80
           - path: /
             pathType: Prefix
             backend:

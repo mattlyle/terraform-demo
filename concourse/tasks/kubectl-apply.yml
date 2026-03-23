@@ -98,10 +98,10 @@ run:
       fi
 
       # ── Shared ingress resources (idempotent — safe to apply on every deploy) ─
-      # ExternalName bridge: demo/grafana-external → monitoring/kube-prometheus-stack-grafana
-      kubectl apply -f repo/k8s/grafana-externalname-svc.yaml
-      # Path-based ingress: /api → api-server, /monitoring → grafana, / → frontend
+      # demo namespace: /api → api-server, / → frontend
       kubectl apply -f repo/k8s/ingress.yaml
+      # monitoring namespace: /monitoring → grafana (lives here to avoid cross-ns ExternalName)
+      kubectl apply -f repo/k8s/grafana-ingress.yaml
 
       echo ""
       echo "Deploy complete: ${SERVICE_NAME}"
