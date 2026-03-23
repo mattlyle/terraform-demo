@@ -522,8 +522,7 @@
         async function submitJob() {
             const min = parseInt(document.getElementById('job-ms-min').value);
             const max = parseInt(document.getElementById('job-ms-max').value);
-            const steps = (max - min) / 100;
-            const ms = min + Math.round(Math.random() * steps) * 100;
+            const ms = min + Math.floor(Math.random() * (max - min + 1));
             try {
                 await fetch('/api/jobs', {
                     method: 'POST',
