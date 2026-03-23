@@ -76,6 +76,8 @@ run:
 
         kubectl create secret generic app-secrets \
           --from-literal=DB_PASSWORD="${DB_PASSWORD}" \
+          --from-literal=AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+          --from-literal=AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
           --namespace demo \
           --dry-run=client -o yaml | kubectl apply -f -
       fi
