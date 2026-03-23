@@ -61,21 +61,6 @@
             flex-shrink: 0;
         }
 
-        .tech-badges {
-            display: flex;
-            gap: 6px;
-        }
-
-        .tech-badge {
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
-            color: #6b7280;
-            font-size: 11px;
-            padding: 2px 9px;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-
         .live-indicator {
             display: flex;
             align-items: center;
@@ -420,11 +405,7 @@
                 <div class="logo-icon">⚡</div>
                 Job Queue Dashboard
             </div>
-            <div class="tech-badges">
-                <span class="tech-badge">AWS EKS</span>
-                <span class="tech-badge">Amazon SQS</span>
-                <span class="tech-badge">PostgreSQL</span>
-            </div>
+
         </div>
         <div class="live-indicator">
             <span class="live-dot"></span>
@@ -491,7 +472,7 @@
                         <th>Duration</th>
                         <th>Status</th>
                         <th>Submitted</th>
-                        <th>Elapsed</th>
+                        <th>Completed</th>
                     </tr>
                 </thead>
                 <tbody id="job-tbody">
@@ -553,18 +534,6 @@
             return new Date(iso).toLocaleTimeString();
         }
 
-        function elapsed(job) {
-            if (job.status === 'completed' && job.started_at && job.completed_at) {
-                const ms = new Date(job.completed_at) - new Date(job.started_at);
-                return (ms / 1000).toFixed(1) + 's';
-            }
-            if (job.status === 'processing' && job.started_at) {
-                const ms = Date.now() - new Date(job.started_at);
-                return (ms / 1000).toFixed(0) + 's…';
-            }
-            return '–';
-        }
-
         async function refresh() {
             try {
                 const res = await fetch('/api/jobs');
@@ -592,7 +561,7 @@
                             <td>${j.job_length_ms}ms</td>
                             <td><span class="badge-status s-${j.status}"><span class="badge-dot"></span>${j.status}</span></td>
                             <td class="mono">${fmt(j.created_at)}</td>
-                            <td class="mono">${elapsed(j)}</td>
+                            <td class="mono">${fmt(j.completed_at)}</td>
                         </tr>`).join('');
                 }
 
