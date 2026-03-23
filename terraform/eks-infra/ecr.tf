@@ -6,6 +6,7 @@ resource "aws_ecr_repository" "this" {
   for_each             = local.ecr_services
   name                 = "${var.project_name}-${each.key}"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   # Scan on push — catches known CVEs immediately at build time.
   image_scanning_configuration {
