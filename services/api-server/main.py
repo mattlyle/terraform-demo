@@ -121,7 +121,7 @@ def list_jobs():
                 SELECT id, job_length_ms, status, created_at, started_at, completed_at
                 FROM jobs
                 ORDER BY created_at DESC
-                LIMIT 100
+                LIMIT 1000
             """)
             rows = cur.fetchall()
     finally:
