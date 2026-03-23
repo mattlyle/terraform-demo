@@ -1,14 +1,452 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SQS Demo</title>
+    <title>Job Queue Dashboard</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        /* ── Header ── */
+        header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 0 32px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #e6edf3;
+            letter-spacing: -0.01em;
+        }
+
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #388bfd 0%, #8957e5 100%);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .tech-badges { display: flex; gap: 6px; }
+
+        .tech-badge {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            font-size: 11px;
+            padding: 2px 9px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            color: #7d8590;
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            background: #3fb950;
+            border-radius: 50%;
+            flex-shrink: 0;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.3; }
+        }
+
+        /* ── Layout ── */
+        main { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+
+        /* ── Stat cards ── */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+
+        .c-total::after      { background: #388bfd; }
+        .c-queued::after     { background: #e3b341; }
+        .c-processing::after { background: #39c5cf; }
+        .c-completed::after  { background: #3fb950; }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #7d8590;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .c-total .stat-value      { color: #388bfd; }
+        .c-queued .stat-value     { color: #e3b341; }
+        .c-processing .stat-value { color: #39c5cf; }
+        .c-completed .stat-value  { color: #3fb950; }
+
+        /* ── Panel ── */
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #7d8590;
+            margin-bottom: 14px;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .control-group { display: flex; align-items: center; gap: 10px; }
+
+        .control-label { font-size: 13px; color: #8b949e; white-space: nowrap; }
+
+        input[type=range] { accent-color: #388bfd; cursor: pointer; width: 130px; }
+
+        .control-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e6edf3;
+            min-width: 56px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .btn-group { display: flex; gap: 8px; margin-left: auto; }
+
+        .btn {
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: filter .15s;
+            white-space: nowrap;
+            line-height: 20px;
+        }
+
+        .btn:hover  { filter: brightness(1.15); }
+        .btn:active { filter: brightness(0.88); }
+
+        .btn-primary   { background: #238636; border-color: #2ea043; color: #fff; }
+        .btn-danger    { background: #b91c1c; border-color: #ef4444; color: #fff; }
+        .btn-secondary { background: #21262d; border-color: #30363d; color: #c9d1d9; }
+
+        /* ── Table ── */
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .table-title { font-size: 13px; font-weight: 600; color: #e6edf3; }
+
+        #status-bar { font-size: 12px; color: #7d8590; }
+
+        .table-wrap {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        thead th {
+            background: #161b22;
+            color: #7d8590;
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .07em;
+            padding: 10px 16px;
+            text-align: left;
+            border-bottom: 1px solid #30363d;
+        }
+
+        tbody tr { border-bottom: 1px solid #21262d; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #1c2128; }
+        tbody td { padding: 10px 16px; font-size: 13px; }
+
+        .job-id {
+            font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+            font-size: 12px;
+            color: #8b949e;
+            background: #21262d;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #30363d;
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+        .s-queued     { background: rgba(227,179,65,.12); color: #e3b341; border: 1px solid rgba(227,179,65,.3); }
+        .s-processing { background: rgba(57,197,207,.12); color: #39c5cf; border: 1px solid rgba(57,197,207,.3); }
+        .s-completed  { background: rgba(63,185,80,.12);  color: #3fb950; border: 1px solid rgba(63,185,80,.3); }
+
+        .s-queued .badge-dot     { background: #e3b341; }
+        .s-processing .badge-dot { background: #39c5cf; animation: blink 1s ease-in-out infinite; }
+        .s-completed .badge-dot  { background: #3fb950; }
+
+        .mono { font-family: "SF Mono", "Fira Code", "Courier New", monospace; font-size: 12px; color: #8b949e; }
+
+        .empty-row td { text-align: center; color: #7d8590; padding: 40px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                Job Queue Dashboard
+            </div>
+            <div class="tech-badges">
+                <span class="tech-badge">AWS EKS</span>
+                <span class="tech-badge">Amazon SQS</span>
+                <span class="tech-badge">PostgreSQL</span>
+            </div>
+        </div>
+        <div class="live-indicator">
+            <span class="live-dot"></span>
+            <span id="status-bar">Connecting…</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="stats">
+            <div class="stat-card c-total">
+                <div class="stat-label">Total Jobs</div>
+                <div class="stat-value" id="s-total">–</div>
+            </div>
+            <div class="stat-card c-queued">
+                <div class="stat-label">Queued</div>
+                <div class="stat-value" id="s-queued">–</div>
+            </div>
+            <div class="stat-card c-processing">
+                <div class="stat-label">Processing</div>
+                <div class="stat-value" id="s-processing">–</div>
+            </div>
+            <div class="stat-card c-completed">
+                <div class="stat-label">Completed</div>
+                <div class="stat-value" id="s-completed">–</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Submit Jobs</div>
+            <div class="controls-row">
+                <div class="control-group">
+                    <span class="control-label">Job duration</span>
+                    <input type="range" id="job-ms" min="500" max="15000" step="500" value="5000"
+                        oninput="document.getElementById('job-ms-val').textContent=this.value+'ms'">
+                    <span class="control-value" id="job-ms-val">5000ms</span>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Submit interval</span>
+                    <input type="range" id="interval" min="500" max="5000" step="500" value="1000"
+                        oninput="document.getElementById('interval-val').textContent=this.value+'ms'">
+                    <span class="control-value" id="interval-val">1000ms</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="submitJob()">Submit One</button>
+                    <button class="btn btn-primary" id="btn-loop" onclick="toggleLoop()">▶ Start Loop</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-toolbar">
+            <span class="table-title">Recent Jobs</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Elapsed</th>
+                    </tr>
+                </thead>
+                <tbody id="job-tbody">
+                    <tr class="empty-row"><td colspan="5">No jobs yet — submit one above</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        let loopTimer = null;
+
+        async function submitJob() {
+            const ms = parseInt(document.getElementById('job-ms').value);
+            try {
+                await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ job_length_ms: ms })
+                });
+                refresh();
+            } catch (e) { console.error('submit failed', e); }
+        }
+
+        function toggleLoop() {
+            const btn = document.getElementById('btn-loop');
+            if (loopTimer) {
+                clearInterval(loopTimer);
+                loopTimer = null;
+                btn.textContent = '▶ Start Loop';
+                btn.className = 'btn btn-primary';
+            } else {
+                const interval = parseInt(document.getElementById('interval').value);
+                loopTimer = setInterval(submitJob, interval);
+                btn.textContent = '⏹ Stop Loop';
+                btn.className = 'btn btn-danger';
+            }
+        }
+
+        function fmt(iso) {
+            if (!iso) return '–';
+            return new Date(iso).toLocaleTimeString();
+        }
+
+        function elapsed(job) {
+            if (job.status === 'completed' && job.started_at && job.completed_at) {
+                const ms = new Date(job.completed_at) - new Date(job.started_at);
+                return (ms / 1000).toFixed(1) + 's';
+            }
+            if (job.status === 'processing' && job.started_at) {
+                const ms = Date.now() - new Date(job.started_at);
+                return (ms / 1000).toFixed(0) + 's…';
+            }
+            return '–';
+        }
+
+        async function refresh() {
+            try {
+                const res = await fetch('/api/jobs');
+                const jobs = await res.json();
+
+                let total = jobs.length, queued = 0, processing = 0, completed = 0;
+                jobs.forEach(j => {
+                    if (j.status === 'queued') queued++;
+                    else if (j.status === 'processing') processing++;
+                    else if (j.status === 'completed') completed++;
+                });
+
+                document.getElementById('s-total').textContent = total;
+                document.getElementById('s-queued').textContent = queued;
+                document.getElementById('s-processing').textContent = processing;
+                document.getElementById('s-completed').textContent = completed;
+
+                const tbody = document.getElementById('job-tbody');
+                if (jobs.length === 0) {
+                    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No jobs yet — submit one above</td></tr>';
+                } else {
+                    tbody.innerHTML = jobs.map(j => `
+                        <tr>
+                            <td><span class="job-id">${j.id}</span></td>
+                            <td>${j.job_length_ms}ms</td>
+                            <td><span class="badge-status s-${j.status}"><span class="badge-dot"></span>${j.status}</span></td>
+                            <td class="mono">${fmt(j.created_at)}</td>
+                            <td class="mono">${elapsed(j)}</td>
+                        </tr>`).join('');
+                }
+
+                document.getElementById('status-bar').textContent =
+                    `Live · updated ${new Date().toLocaleTimeString()}`;
+            } catch (e) {
+                document.getElementById('status-bar').textContent = 'API unavailable — retrying…';
+            }
+        }
+
+        refresh();
+        setInterval(refresh, 2000);
+    </script>
+</body>
+</html>
+
             padding: 0;
         }
 
