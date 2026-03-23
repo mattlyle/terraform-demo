@@ -64,19 +64,17 @@ jobs:
             source: { repository: alpine }
           outputs:
             - name: tag
-          params:
-            BUILD_NAME: ""
           run:
             path: sh
-            args: ["-c", "echo v0.$BUILD_NAME > tag/tag"]
-        params:
-          BUILD_NAME: ((.:build-name))
+            args: ["-c", "date +%Y%m%d-%H%M%S > tag/tag"]
       - put: api-server-image
         params:
           image: image/image.tar
           additional_tags: tag/tag
       - task: kubectl-apply
         file: repo/concourse/tasks/kubectl-apply.yml
+        input_mapping:
+          tag: tag
         params:
           AWS_ACCESS_KEY_ID: ((aws_access_key_id))
           AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
@@ -90,7 +88,6 @@ jobs:
           DB_USER: ((db_user))
           SSM_DB_PASSWORD_PATH: ((ssm_db_password_path))
           SQS_QUEUE_URL: ((sqs_queue_url))
-          IMAGE_TAG: v0.$BUILD_NAME
 
   - name: frontend
     plan:
@@ -119,19 +116,17 @@ jobs:
             source: { repository: alpine }
           outputs:
             - name: tag
-          params:
-            BUILD_NAME: ""
           run:
             path: sh
-            args: ["-c", "echo v0.$BUILD_NAME > tag/tag"]
-        params:
-          BUILD_NAME: ((.:build-name))
+            args: ["-c", "date +%Y%m%d-%H%M%S > tag/tag"]
       - put: frontend-image
         params:
           image: image/image.tar
           additional_tags: tag/tag
       - task: kubectl-apply
         file: repo/concourse/tasks/kubectl-apply.yml
+        input_mapping:
+          tag: tag
         params:
           AWS_ACCESS_KEY_ID: ((aws_access_key_id))
           AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
@@ -140,7 +135,6 @@ jobs:
           SERVICE_NAME: frontend
           ECR_REGISTRY: ((ecr_registry))
           PROJECT_NAME: ((project_name))
-          IMAGE_TAG: v0.$BUILD_NAME
 
   - name: backend-worker
     plan:
@@ -169,19 +163,17 @@ jobs:
             source: { repository: alpine }
           outputs:
             - name: tag
-          params:
-            BUILD_NAME: ""
           run:
             path: sh
-            args: ["-c", "echo v0.$BUILD_NAME > tag/tag"]
-        params:
-          BUILD_NAME: ((.:build-name))
+            args: ["-c", "date +%Y%m%d-%H%M%S > tag/tag"]
       - put: backend-worker-image
         params:
           image: image/image.tar
           additional_tags: tag/tag
       - task: kubectl-apply
         file: repo/concourse/tasks/kubectl-apply.yml
+        input_mapping:
+          tag: tag
         params:
           AWS_ACCESS_KEY_ID: ((aws_access_key_id))
           AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
@@ -195,4 +187,3 @@ jobs:
           DB_USER: ((db_user))
           SSM_DB_PASSWORD_PATH: ((ssm_db_password_path))
           SQS_QUEUE_URL: ((sqs_queue_url))
-          IMAGE_TAG: v0.$BUILD_NAME

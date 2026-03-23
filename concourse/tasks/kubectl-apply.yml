@@ -13,23 +13,24 @@ image_resource:
 
 inputs:
   - name: repo
+  - name: tag
 
 params:
   AWS_ACCESS_KEY_ID: ""
   AWS_SECRET_ACCESS_KEY: ""
   AWS_DEFAULT_REGION: "us-east-1"
   CLUSTER_NAME: ""
-  SERVICE_NAME: ""          # frontend | api-server | backend-worker
-  ECR_REGISTRY: ""          # e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com
+  SERVICE_NAME: "" # frontend | api-server | backend-worker
+  ECR_REGISTRY: "" # e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com
   PROJECT_NAME: ""
   # ConfigMap values (not needed for frontend)
   DB_HOST: ""
   DB_PORT: "5432"
   DB_NAME: ""
   DB_USER: ""
-  SSM_DB_PASSWORD_PATH: ""  # e.g. /matt-lyle-terraform-demo/db/password
+  SSM_DB_PASSWORD_PATH: "" # e.g. /matt-lyle-terraform-demo/db/password
   SQS_QUEUE_URL: ""
-  IMAGE_TAG: "latest"      # e.g. v0.9 — set by the pipeline
+  IMAGE_TAG: "latest" # e.g. v0.9 — set by the pipeline
 
 run:
   path: sh
@@ -37,6 +38,8 @@ run:
     - -euc
     - |
       # ── Install kubectl ──────────────────────────────────────────────────────
+      IMAGE_TAG=$(cat tag/tag 2>/dev/null | tr -d '[:space:]')
+      IMAGE_TAG=${IMAGE_TAG:-latest}
       KUBECTL_VERSION="1.33.0"
       curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
         -o /usr/local/bin/kubectl
