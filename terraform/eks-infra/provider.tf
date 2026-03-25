@@ -29,15 +29,21 @@ provider "aws" {
   }
 }
 
-# Kubernetes provider — configured after EKS cluster is up.
-# Uses aws_eks_cluster_auth data source rather than an exec block so it works
-# inside the Concourse Terraform task image (which has no aws CLI binary).
+# Fetch cluster details and a short-lived token via the AWS API.
+# No aws CLI binary required — works in any environment with IAM credentials.
+# The cluster name is a static local so these resolve even during plan.
+data "aws_eks_cluster" "cluster" {
+  name = local.cluster_name
+}
+
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
+  name = local.cluster_name
 }
 
 provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
   token                  = data.aws_eks_cluster_auth.cluster.token
 }
+
+
