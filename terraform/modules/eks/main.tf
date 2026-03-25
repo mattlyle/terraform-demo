@@ -52,3 +52,71 @@ module "eks" {
 
   tags = var.tags
 }
+
+# The EBS CSI driver is required for PersistentVolumeClaims backed by EBS.
+# Without it, StatefulSets (e.g. Concourse PostgreSQL) stay Pending.
+# Uses IRSA so the controller pod has its own IAM identity — avoids the
+# IMDSv2 hop-limit issue (hop_limit=1 blocks pod-level IMDS access).
+resource "aws_iam_role" "ebs_csi_driver" {
+  name = "${module.eks.cluster_name}-ebs-csi-driver"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = module.eks.oidc_provider_arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+          "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
+  role       = aws_iam_role.ebs_csi_driver.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
+
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name                = module.eks.cluster_name
+  addon_name                  = "aws-ebs-csi-driver"
+  service_account_role_arn    = aws_iam_role.ebs_csi_driver.arn
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+  tags                        = var.tags
+
+  depends_on = [aws_iam_role_policy_attachment.ebs_csi_driver]
+}
+
+# vpc-cni manages pod IP allocation from the VPC CIDR.
+# resource "aws_eks_addon" "vpc_cni" {
+#   cluster_name                = module.eks.cluster_name
+#   addon_name                  = "vpc-cni"
+#   resolve_conflicts_on_create = "OVERWRITE"
+#   resolve_conflicts_on_update = "OVERWRITE"
+#   tags                        = var.tags
+# }
+
+# coredns provides cluster-internal DNS resolution.
+# resource "aws_eks_addon" "coredns" {
+#   cluster_name                = module.eks.cluster_name
+#   addon_name                  = "coredns"
+#   resolve_conflicts_on_create = "OVERWRITE"
+#   resolve_conflicts_on_update = "OVERWRITE"
+#   tags                        = var.tags
+# }
+
+# kube-proxy maintains network rules on each node for Service routing.
+# resource "aws_eks_addon" "kube_proxy" {
+#   cluster_name                = module.eks.cluster_name
+#   addon_name                  = "kube-proxy"
+#   resolve_conflicts_on_create = "OVERWRITE"
+#   resolve_conflicts_on_update = "OVERWRITE"
+#   tags                        = var.tags
+# }

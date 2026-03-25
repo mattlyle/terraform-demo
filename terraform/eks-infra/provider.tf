@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -22,5 +26,19 @@ provider "aws" {
 
   default_tags {
     tags = local.common_tags
+  }
+}
+
+# Kubernetes provider — configured after EKS cluster is up.
+# Used to manage cluster-level resources (e.g. StorageClass) alongside the
+# AWS resources that depend on them, without a separate kubectl step.
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.aws_region]
   }
 }
