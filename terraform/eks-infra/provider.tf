@@ -30,15 +30,14 @@ provider "aws" {
 }
 
 # Kubernetes provider — configured after EKS cluster is up.
-# Used to manage cluster-level resources (e.g. StorageClass) alongside the
-# AWS resources that depend on them, without a separate kubectl step.
+# Uses aws_eks_cluster_auth data source rather than an exec block so it works
+# inside the Concourse Terraform task image (which has no aws CLI binary).
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
+}
+
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_ca_certificate)
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.aws_region]
-  }
+  token                  = data.aws_eks_cluster_auth.cluster.token
 }
