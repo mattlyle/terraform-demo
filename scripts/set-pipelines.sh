@@ -49,10 +49,7 @@ if ! fly -t local status &>/dev/null; then
 fi
 
 PIPELINES=(
-  networking-infra
-  eks-infra
-  rds-infra
-  sqs-infra
+  deploy-infra
   install-ingress
   install-monitoring
   deploy-services
