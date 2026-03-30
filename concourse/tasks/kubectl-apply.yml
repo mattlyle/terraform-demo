@@ -37,12 +37,16 @@ run:
   args:
     - -euc
     - |
-      # ── Install kubectl ──────────────────────────────────────────────────────
+      set -o pipefail
+      # ── Install kubectl ──────────────────────────────────────────────────────────────────────────
       IMAGE_TAG=$(cat tag/tag 2>/dev/null | tr -d '[:space:]')
       IMAGE_TAG=${IMAGE_TAG:-latest}
       KUBECTL_VERSION="1.33.0"
       curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
         -o /usr/local/bin/kubectl
+      curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256" \
+        -o /tmp/kubectl.sha256
+      echo "$(cat /tmp/kubectl.sha256)  /usr/local/bin/kubectl" | sha256sum -c -
       chmod +x /usr/local/bin/kubectl
 
       # Install gettext for envsubst

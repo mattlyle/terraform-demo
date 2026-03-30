@@ -28,8 +28,3 @@ variable "db_username" {
   default     = "demouser"
 }
 
-variable "allowed_admin_cidrs" {
-  description = "CIDRs allowed to connect to RDS on port 5432 from outside the VPC"
-  type        = list(string)
-  default     = ["73.34.142.13/32"]
-}

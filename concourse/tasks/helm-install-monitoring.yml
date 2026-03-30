@@ -23,6 +23,7 @@ run:
   args:
     - -euc
     - |
+      set -o pipefail
       apk add --no-cache aws-cli helm kubectl
 
       aws eks update-kubeconfig \

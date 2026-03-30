@@ -44,9 +44,9 @@ variable "node_max_size" {
 }
 
 variable "api_server_allowed_cidrs" {
-  description = "CIDRs allowed to reach the EKS public API endpoint"
+  description = "CIDRs allowed to reach the EKS public API endpoint. Restrict to your IP(s) — leaving this open exposes the Kubernetes API to the internet."
   type        = list(string)
-  default     = ["73.34.142.13/32"]
+  default     = ["0.0.0.0/0"]
 }
 
 variable "tags" {

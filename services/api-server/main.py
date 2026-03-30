@@ -99,7 +99,7 @@ def create_job(body: CreateJobRequest):
         conn.commit()
     except Exception as exc:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail="Internal server error")
     finally:
         pool.putconn(conn)
 

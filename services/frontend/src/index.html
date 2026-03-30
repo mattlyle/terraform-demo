@@ -139,13 +139,29 @@
             background: #16a34a;
         }
 
-        .c-shortest::after { background: #7c3aed; }
-        .c-longest::after  { background: #db2777; }
-        .c-avg::after      { background: #0891b2; }
+        .c-shortest::after {
+            background: #7c3aed;
+        }
 
-        .c-shortest .stat-value { color: #7c3aed; }
-        .c-longest .stat-value  { color: #db2777; }
-        .c-avg .stat-value      { color: #0891b2; }
+        .c-longest::after {
+            background: #db2777;
+        }
+
+        .c-avg::after {
+            background: #0891b2;
+        }
+
+        .c-shortest .stat-value {
+            color: #7c3aed;
+        }
+
+        .c-longest .stat-value {
+            color: #db2777;
+        }
+
+        .c-avg .stat-value {
+            color: #0891b2;
+        }
 
         .stats-duration {
             display: grid;
@@ -572,8 +588,8 @@
                 ]);
                 const stats = await statsRes.json();
                 document.getElementById('s-shortest').textContent = stats.shortest_ms != null ? stats.shortest_ms + 'ms' : '–';
-                document.getElementById('s-longest').textContent  = stats.longest_ms  != null ? stats.longest_ms  + 'ms' : '–';
-                document.getElementById('s-avg').textContent      = stats.avg_ms       != null ? stats.avg_ms       + 'ms' : '–';
+                document.getElementById('s-longest').textContent = stats.longest_ms != null ? stats.longest_ms + 'ms' : '–';
+                document.getElementById('s-avg').textContent = stats.avg_ms != null ? stats.avg_ms + 'ms' : '–';
                 const jobs = await res.json();
 
                 let total = jobs.length, queued = 0, processing = 0, completed = 0;

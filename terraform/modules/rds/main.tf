@@ -14,7 +14,7 @@ resource "aws_ssm_parameter" "db_password" {
 
 resource "aws_db_subnet_group" "this" {
   name       = var.cluster_name
-  subnet_ids = concat(var.public_subnet_ids, var.private_subnet_ids)
+  subnet_ids = var.private_subnet_ids
   tags       = var.tags
 }
 
@@ -30,17 +30,6 @@ resource "aws_security_group" "rds" {
     to_port         = 5432
     protocol        = "tcp"
     security_groups = [var.node_security_group_id]
-  }
-
-  dynamic "ingress" {
-    for_each = length(var.allowed_admin_cidrs) > 0 ? [1] : []
-    content {
-      description = "PostgreSQL from admin CIDRs"
-      from_port   = 5432
-      to_port     = 5432
-      protocol    = "tcp"
-      cidr_blocks = var.allowed_admin_cidrs
-    }
   }
 
   egress {
@@ -72,7 +61,7 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   multi_az            = false
-  publicly_accessible = true
+  publicly_accessible = false
 
   backup_retention_period = 7
   skip_final_snapshot     = true

@@ -25,6 +25,7 @@ run:
   args:
     - -euc
     - |
+      set -o pipefail
       cd repo/${TF_DIR}
       terraform init -input=false
       terraform apply -auto-approve -input=false ${TF_TARGETS}
