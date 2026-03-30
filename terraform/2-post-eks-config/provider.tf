@@ -3,7 +3,7 @@ terraform {
 
   backend "s3" {
     bucket         = "matt-lyle-terraform-demo-tfstate"
-    key            = "matt-lyle-terraform-demo/eks/terraform.tfstate"
+    key            = "matt-lyle-terraform-demo/post-eks-config/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "matt-lyle-terraform-demo-tfstate-lock"
     encrypt        = true
@@ -31,7 +31,7 @@ provider "aws" {
 
 # Fetch cluster details and a short-lived token via the AWS API.
 # No aws CLI binary required — works in any environment with IAM credentials.
-# The cluster name is a static local so these resolve even during plan.
+# The cluster must already exist (created by 1-eks-infra) before applying this.
 data "aws_eks_cluster" "cluster" {
   name = local.cluster_name
 }
@@ -45,5 +45,3 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
   token                  = data.aws_eks_cluster_auth.cluster.token
 }
-
-

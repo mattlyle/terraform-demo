@@ -26,26 +26,4 @@ module "eks" {
 # Used to construct the ECR registry URL output
 data "aws_caller_identity" "current" {}
 
-# CSI-backed StorageClass used by any StatefulSet that needs EBS volumes
-# (e.g. Concourse PostgreSQL, Concourse workers).
-# Declared here so it is created in the same apply as the EBS CSI addon.
-resource "kubernetes_storage_class_v1" "gp2_csi" {
-  metadata {
-    name = "gp2-csi"
-    annotations = {
-      "storageclass.kubernetes.io/is-default-class" = "true"
-    }
-  }
 
-  storage_provisioner    = "ebs.csi.aws.com"
-  reclaim_policy         = "Delete"
-  volume_binding_mode    = "WaitForFirstConsumer"
-  allow_volume_expansion = true
-
-  parameters = {
-    type                        = "gp2"
-    "csi.storage.k8s.io/fstype" = "xfs"
-  }
-
-  depends_on = [module.eks]
-}

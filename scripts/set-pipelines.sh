@@ -21,13 +21,13 @@ get_tf_output() {
 }
 
 echo "Reading Terraform outputs (silently skips modules not yet applied)..."
-ECR_REGISTRY=$(get_tf_output      "eks-infra" "ecr_registry")
+ECR_REGISTRY=$(get_tf_output      "1-eks-infra" "ecr_registry")
 AWS_ACCOUNT_ID=$(echo "${ECR_REGISTRY}" | cut -d. -f1)
-SQS_QUEUE_URL=$(get_tf_output     "sqs-infra" "sqs_queue_url")
-DB_HOST=$(get_tf_output           "rds-infra" "db_endpoint")
-DB_NAME=$(get_tf_output           "rds-infra" "db_name")
-DB_USER=$(get_tf_output           "rds-infra" "db_username")
-SSM_DB_PASSWORD_PATH=$(get_tf_output "rds-infra" "db_password_ssm_path")
+SQS_QUEUE_URL=$(get_tf_output     "4-sqs-infra" "sqs_queue_url")
+DB_HOST=$(get_tf_output           "3-rds-infra" "db_endpoint")
+DB_NAME=$(get_tf_output           "3-rds-infra" "db_name")
+DB_USER=$(get_tf_output           "3-rds-infra" "db_username")
+SSM_DB_PASSWORD_PATH=$(get_tf_output "3-rds-infra" "db_password_ssm_path")
 
 if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
   CREDS_FILE="${HOME}/.aws/credentials"
@@ -42,10 +42,20 @@ if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
   exit 1
 fi
 
-# Log in to the local Concourse target if not already authenticated.
-if ! fly -t local status &>/dev/null; then
-  echo "Logging in to Concourse..."
-  fly -t local login -c http://localhost:8080 -u admin -p admin
+# Resolve the Concourse web URL from the in-cluster LoadBalancer.
+# Falls back gracefully if the cluster isn't up yet.
+CONCOURSE_HOST=$(kubectl get svc concourse-web -n concourse \
+  --output jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
+CONCOURSE_URL="http://${CONCOURSE_HOST}:8080"
+
+# Log in to the in-cluster Concourse target if not already authenticated.
+if ! fly -t eks status &>/dev/null; then
+  if [ -z "${CONCOURSE_HOST}" ]; then
+    echo "ERROR: Could not determine Concourse URL. Is the cluster up and install-concourse.sh run?"
+    exit 1
+  fi
+  echo "Logging in to Concourse at ${CONCOURSE_URL}..."
+  fly -t eks login -c "${CONCOURSE_URL}" -u admin -p "${CONCOURSE_ADMIN_PASS:-admin}"
 fi
 
 PIPELINES=(
@@ -57,7 +67,7 @@ PIPELINES=(
 
 for pipeline in "${PIPELINES[@]}"; do
   echo "Setting pipeline: ${pipeline}"
-  fly -t local set-pipeline \
+  fly -t eks set-pipeline \
     --non-interactive \
     --pipeline "${pipeline}" \
     --config "${PIPELINES_DIR}/${pipeline}.yml" \
@@ -75,7 +85,7 @@ for pipeline in "${PIPELINES[@]}"; do
     --var "db_name=${DB_NAME}" \
     --var "db_user=${DB_USER}" \
     --var "ssm_db_password_path=${SSM_DB_PASSWORD_PATH}"
-  fly -t local unpause-pipeline --pipeline "${pipeline}"
+  fly -t eks unpause-pipeline --pipeline "${pipeline}"
 done
 
 echo ""
