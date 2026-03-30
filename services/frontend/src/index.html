@@ -139,6 +139,21 @@
             background: #16a34a;
         }
 
+        .c-shortest::after { background: #7c3aed; }
+        .c-longest::after  { background: #db2777; }
+        .c-avg::after      { background: #0891b2; }
+
+        .c-shortest .stat-value { color: #7c3aed; }
+        .c-longest .stat-value  { color: #db2777; }
+        .c-avg .stat-value      { color: #0891b2; }
+
+        .stats-duration {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
         .stat-label {
             font-size: 11px;
             font-weight: 600;
@@ -433,6 +448,21 @@
             </div>
         </div>
 
+        <div class="stats-duration">
+            <div class="stat-card c-shortest">
+                <div class="stat-label">Shortest (completed)</div>
+                <div class="stat-value" id="s-shortest">–</div>
+            </div>
+            <div class="stat-card c-longest">
+                <div class="stat-label">Longest (completed)</div>
+                <div class="stat-value" id="s-longest">–</div>
+            </div>
+            <div class="stat-card c-avg">
+                <div class="stat-label">Avg Duration (completed)</div>
+                <div class="stat-value" id="s-avg">–</div>
+            </div>
+        </div>
+
         <div class="panel">
             <div class="panel-title">Submit Jobs</div>
             <div class="controls-row">
@@ -536,7 +566,14 @@
 
         async function refresh() {
             try {
-                const res = await fetch('/api/jobs');
+                const [statsRes, res] = await Promise.all([
+                    fetch('/api/stats'),
+                    fetch('/api/jobs'),
+                ]);
+                const stats = await statsRes.json();
+                document.getElementById('s-shortest').textContent = stats.shortest_ms != null ? stats.shortest_ms + 'ms' : '–';
+                document.getElementById('s-longest').textContent  = stats.longest_ms  != null ? stats.longest_ms  + 'ms' : '–';
+                document.getElementById('s-avg').textContent      = stats.avg_ms       != null ? stats.avg_ms       + 'ms' : '–';
                 const jobs = await res.json();
 
                 let total = jobs.length, queued = 0, processing = 0, completed = 0;

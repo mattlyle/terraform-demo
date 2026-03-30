@@ -111,6 +111,34 @@ def create_job(body: CreateJobRequest):
     return {"job_id": job_id, "job_length_ms": body.job_length_ms, "status": "queued"}
 
 
+@app.get("/api/stats")
+def get_stats():
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT
+                    MIN(job_length_ms),
+                    MAX(job_length_ms),
+                    ROUND(AVG(job_length_ms))
+                FROM jobs
+                WHERE status = 'completed'
+            """)
+            row = cur.fetchone()
+    finally:
+        pool.putconn(conn)
+
+    if row[0] is None:
+        return {"shortest_ms": None, "longest_ms": None, "avg_ms": None}
+
+    return {
+        "shortest_ms": row[0],
+        "longest_ms":  row[1],
+        "avg_ms":      int(row[2]),
+    }
+
+
 @app.get("/api/jobs")
 def list_jobs():
     pool = get_pool()
