@@ -11,6 +11,7 @@ A sample web application showing a job queue dashboard where users submit jobs w
 |---|---|
 | **VPC** | All networking and routing |
 | **EKS** | frontend, API server, and background worker running as Kubernetes workloads |
+| **ECR** | Container registry |
 | **RDS** | PostgreSQL database holding the job state, stored in a private subnet and only reachable from the cluster |
 | **SQS** | AWS Simple Queue Service - decouples job submission from processing |
 | **Grafana** | cluster observability at /monitoring |
@@ -77,6 +78,8 @@ Install Concourse into the cluster, then register and run the remaining pipeline
 
     ./scripts/install-concourse-eks.sh
     ./scripts/set-pipelines.sh
+
+Then use concourse to deploy the services.  Concourse will check out the code from git, run the `docker build` and `docker push` to ECR, then run `kubectl apply` to deploy the manifests to the cluster.
 
 Tear down when not actively working to avoid unnecessary costs:
 
