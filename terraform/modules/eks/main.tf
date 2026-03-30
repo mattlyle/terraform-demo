@@ -52,7 +52,17 @@ module "eks" {
 
   tags = var.tags
 }
-
+# The default node-to-node rule only covers ephemeral ports (1025-65535).
+# Port 80 is needed for nginx ingress → frontend pod traffic across nodes.
+resource "aws_security_group_rule" "node_to_node_http" {
+  description              = "Node to node HTTP (port 80) — ingress controller to frontend pods"
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  security_group_id        = module.eks.node_security_group_id
+  source_security_group_id = module.eks.node_security_group_id
+}
 # The EBS CSI driver is required for PersistentVolumeClaims backed by EBS.
 # Without it, StatefulSets (e.g. Concourse PostgreSQL) stay Pending.
 # Uses IRSA so the controller pod has its own IAM identity — avoids the
