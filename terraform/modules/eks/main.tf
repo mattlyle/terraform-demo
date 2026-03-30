@@ -55,7 +55,7 @@ module "eks" {
 # The default node-to-node rule only covers ephemeral ports (1025-65535).
 # Port 80 is needed for nginx ingress → frontend pod traffic across nodes.
 resource "aws_security_group_rule" "node_to_node_http" {
-  description              = "Node to node HTTP (port 80) — ingress controller to frontend pods"
+  description              = "Node to node HTTP (port 80) - ingress controller to frontend pods"
   type                     = "ingress"
   from_port                = 80
   to_port                  = 80
