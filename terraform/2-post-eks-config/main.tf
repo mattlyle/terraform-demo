@@ -1,6 +1,6 @@
-# CSI-backed StorageClass — cluster default for any StatefulSet needing EBS
-# (Concourse PostgreSQL, workers). XFS avoids the lost+found issue that blocks
-# PostgreSQL initdb when the volume root is not empty.
+# This is a workaround for the fact that EKS/Terraform does not support setting a default storage class
+# We need it set, but not until AFTER the cluster is running, so we have the separate post-eks configuration.
+
 resource "kubernetes_storage_class_v1" "gp2_csi" {
   metadata {
     name = "gp2-csi"

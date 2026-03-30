@@ -1,22 +1,22 @@
 ```
-cd terraform/0-networking-infra
+cd ../0-networking-infra
 terraform apply
 
-cd terraform/1-eks-infra
+cd ../1-eks-infra
 terraform apply
 
-cd terraform/2-post-eks-infra
+cd ../2-post-eks-infra
 terraform apply
 
-cd terraform/3-rds-infra
+cd ../3-rds-infra
 terraform apply
 
-cd terraform/4-sqs-infra
+cd ../4-sqs-infra
 terraform apply
 
 aws eks update-kubeconfig --region us-east-1 --name matt-lyle-terraform-demo-eks
 
-cd scripts
+cd ../../scripts
 ./install-concourse-eks.sh
 ```
 

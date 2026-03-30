@@ -11,8 +11,9 @@ variable "project_name" {
 }
 
 variable "api_server_allowed_cidrs" {
-  description = "CIDRs allowed to reach the EKS public API endpoint. Set in terraform.tfvars — do not hardcode here."
+  description = "CIDRs allowed to reach the EKS public API endpoint. Set in terraform.tfvars to restrict to your IP."
   type        = list(string)
+  default     = ["0.0.0.0/0"]
 }
 
 variable "node_instance_type" {
