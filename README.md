@@ -31,8 +31,9 @@ Folder layout:
 
 Provisioned with Terraform across five layers applied in order:
 
-| Layer | What it creates |
+| Folder | What it creates |
 |---|---|
+| modules | base modules that can be reused |
 | 0-networking-infra | VPC, subnets, NAT gateway, VPC flow logs |
 | 1-eks-infra | EKS cluster, managed node group, ECR |
 | 2-post-eks-config | Kubernetes StorageClass |
@@ -65,6 +66,8 @@ flowchart LR
 
 
 ## Running it
+
+**Note** for security reasons, I suggest only opening up the EKS API to yourself or bad people on the internet could make you have a bad day.  See the `api_server_allowed_cidrs = ["1.2.3.4/32"]` in the eks module to whitelist your IP.
 
 One-time backend setup (S3 state bucket and DynamoDB lock table):
 

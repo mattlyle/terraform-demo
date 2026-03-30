@@ -35,23 +35,3 @@ from GUI show concourse is running and pipelines exist.  run a plan
 
 from GUI: install-ingress
 
-
----
-
-lock down overnight
-```
-kubectl patch svc ingress-nginx-controller -n ingress-nginx \
-  -p '{"spec":{"loadBalancerSourceRanges":["73.34.142.13/32"]}}'
-
-kubectl patch svc concourse-web -n concourse \
-  -p '{"spec":{"loadBalancerSourceRanges":["73.34.142.13/32"]}}'
-```
-
-open up before demo
-```
-kubectl patch svc ingress-nginx-controller -n ingress-nginx \
-  -p '{"spec":{"loadBalancerSourceRanges":null}}'
-
-kubectl patch svc concourse-web -n concourse \
-  -p '{"spec":{"loadBalancerSourceRanges":null}}'
-```

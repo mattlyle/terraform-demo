@@ -1,0 +1,3 @@
+# Copy to terraform.tfvars and set your IP.
+# This file is safe to commit — terraform.tfvars is gitignored.
+api_server_allowed_cidrs = ["1.2.3.4/32"]
