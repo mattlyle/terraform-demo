@@ -6,12 +6,14 @@
 #                               │
 #                         eks-plan ──► eks-apply
 #                                           │
-#                              ┌────────────┴────────────┐
-#                         rds-plan               sqs-plan
-#                              │                     │
-#                         rds-apply             sqs-apply
+#                               post-eks-config-plan ──► post-eks-config-apply
+#                                                                   │
+#                                              ┌────────────────────┴────────────┐
+#                                         rds-plan                          sqs-plan
+#                                              │                                 │
+#                                         rds-apply                         sqs-apply
 #
-# RDS and SQS are independent of each other so they run in parallel after EKS.
+# RDS and SQS are independent of each other so they run in parallel after post-eks-config.
 # Chaining is done via `passed:` on the shared `repo` resource — Concourse will
 # only fan a version through a job once all listed upstream jobs have passed it.
 
@@ -24,13 +26,12 @@ resources:
 
 # ── Common param anchor — avoids repeating credentials in every job ───────────
 common_params: &common_params
-  AWS_ACCESS_KEY_ID:     ((aws_access_key_id))
+  AWS_ACCESS_KEY_ID: ((aws_access_key_id))
   AWS_SECRET_ACCESS_KEY: ((aws_secret_access_key))
-  AWS_DEFAULT_REGION:    ((aws_region))
-  TF_VAR_project_name:   ((project_name))
+  AWS_DEFAULT_REGION: ((aws_region))
+  TF_VAR_project_name: ((project_name))
 
 jobs:
-
   # ── Networking ───────────────────────────────────────────────────────────────
   - name: networking-plan
     plan:
@@ -40,7 +41,7 @@ jobs:
         file: repo/concourse/tasks/terraform-plan.yml
         params:
           <<: *common_params
-          TF_DIR: terraform/networking-infra
+          TF_DIR: terraform/0-networking-infra
 
   - name: networking-apply
     plan:
@@ -50,7 +51,7 @@ jobs:
         file: repo/concourse/tasks/terraform-apply.yml
         params:
           <<: *common_params
-          TF_DIR: terraform/networking-infra
+          TF_DIR: terraform/0-networking-infra
 
   # ── EKS ──────────────────────────────────────────────────────────────────────
   - name: eks-plan
@@ -61,7 +62,7 @@ jobs:
         file: repo/concourse/tasks/terraform-plan.yml
         params:
           <<: *common_params
-          TF_DIR: terraform/eks-infra
+          TF_DIR: terraform/1-eks-infra
 
   - name: eks-apply
     plan:
@@ -71,10 +72,10 @@ jobs:
         file: repo/concourse/tasks/terraform-apply.yml
         params:
           <<: *common_params
-          TF_DIR: terraform/eks-infra
+          TF_DIR: terraform/1-eks-infra
 
-  # ── RDS (runs in parallel with SQS after EKS) ────────────────────────────────
-  - name: rds-plan
+  # ── Post-EKS config (StorageClass etc — requires cluster to exist) ────────────
+  - name: post-eks-config-plan
     plan:
       - get: repo
         passed: [eks-apply]
@@ -82,7 +83,28 @@ jobs:
         file: repo/concourse/tasks/terraform-plan.yml
         params:
           <<: *common_params
-          TF_DIR: terraform/rds-infra
+          TF_DIR: terraform/2-post-eks-config
+
+  - name: post-eks-config-apply
+    plan:
+      - get: repo
+        passed: [post-eks-config-plan]
+      - task: terraform-apply
+        file: repo/concourse/tasks/terraform-apply.yml
+        params:
+          <<: *common_params
+          TF_DIR: terraform/2-post-eks-config
+
+  # ── RDS (runs in parallel with SQS after post-eks-config) ────────────────────
+  - name: rds-plan
+    plan:
+      - get: repo
+        passed: [post-eks-config-apply]
+      - task: terraform-plan
+        file: repo/concourse/tasks/terraform-plan.yml
+        params:
+          <<: *common_params
+          TF_DIR: terraform/3-rds-infra
 
   - name: rds-apply
     plan:
@@ -92,18 +114,18 @@ jobs:
         file: repo/concourse/tasks/terraform-apply.yml
         params:
           <<: *common_params
-          TF_DIR: terraform/rds-infra
+          TF_DIR: terraform/3-rds-infra
 
-  # ── SQS (runs in parallel with RDS after EKS) ────────────────────────────────
+  # ── SQS (runs in parallel with RDS after post-eks-config) ────────────────────
   - name: sqs-plan
     plan:
       - get: repo
-        passed: [eks-apply]
+        passed: [post-eks-config-apply]
       - task: terraform-plan
         file: repo/concourse/tasks/terraform-plan.yml
         params:
           <<: *common_params
-          TF_DIR: terraform/sqs-infra
+          TF_DIR: terraform/4-sqs-infra
 
   - name: sqs-apply
     plan:
@@ -113,4 +135,4 @@ jobs:
         file: repo/concourse/tasks/terraform-apply.yml
         params:
           <<: *common_params
-          TF_DIR: terraform/sqs-infra
+          TF_DIR: terraform/4-sqs-infra
